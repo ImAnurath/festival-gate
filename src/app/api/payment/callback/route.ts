@@ -18,15 +18,28 @@ export async function POST(req: NextRequest) {
 
   const amount = app.ticketQuantity * config.ticketPrice;
 
+  let paid;
   try {
-    const paid = await markPaidByToken(result.payToken, result.ref, amount);
-    await getNotifier().send(paid.email, buildConfirmationEmail({
-      eventName: config.eventName,
-      name: paid.name,
-      ticketQuantity: paid.ticketQuantity,
-    }));
-    return NextResponse.json({ ok: true });
+    paid = await markPaidByToken(result.payToken, result.ref, amount);
   } catch {
+    // Not payable: already paid, expired, or unknown -> idempotent no-op (do not retry).
     return NextResponse.json({ ok: true, note: "no-op" });
   }
+
+  // Payment is recorded. The confirmation email is best-effort; a send failure
+  // must never undo or mask the paid result.
+  try {
+    await getNotifier().send(
+      paid.email,
+      buildConfirmationEmail({
+        eventName: config.eventName,
+        name: paid.name,
+        ticketQuantity: paid.ticketQuantity,
+      })
+    );
+  } catch (err) {
+    console.error("Confirmation email failed for", paid.email, err);
+  }
+
+  return NextResponse.json({ ok: true });
 }

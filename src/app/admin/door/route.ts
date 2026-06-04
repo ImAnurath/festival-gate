@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { Status } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-
-function csvCell(value: string): string {
-  return `"${value.replace(/"/g, '""')}"`;
-}
+import { toCsv } from "@/lib/csv";
 
 export async function GET() {
   const session = await getSession();
@@ -16,16 +13,15 @@ export async function GET() {
     orderBy: { name: "asc" },
   });
 
-  const header = ["Buyer", "Email", "Tickets", "Guests"].join(",");
-  const rows = paid.map((a) =>
-    [
-      csvCell(a.name),
-      csvCell(a.email),
+  const csv = toCsv(
+    ["Buyer", "Email", "Tickets", "Guests"],
+    paid.map((a) => [
+      a.name,
+      a.email,
       String(a.ticketQuantity),
-      csvCell((JSON.parse(a.guestNames) as string[]).join("; ")),
-    ].join(",")
+      (JSON.parse(a.guestNames) as string[]).join("; "),
+    ])
   );
-  const csv = [header, ...rows].join("\r\n");
 
   return new NextResponse(csv, {
     headers: {
