@@ -13,12 +13,12 @@ export async function login(_prev: { error: string }, formData: FormData) {
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const admin = await prisma.adminUser.findUnique({ where: { email } });
-  if (!admin) return { error: "Invalid credentials" };
+  if (!admin) return { error: "E-posta veya parola hatalı" };
 
   const a = Buffer.from(hash(password));
   const b = Buffer.from(admin.passwordHash);
   if (a.length !== b.length || !timingSafeEqual(a, b)) {
-    return { error: "Invalid credentials" };
+    return { error: "E-posta veya parola hatalı" };
   }
 
   const session = await getSession();

@@ -24,7 +24,7 @@ export async function submitApplication(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? "Geçersiz giriş. Lütfen bilgilerinizi kontrol edin." };
   }
 
   await createApplication({

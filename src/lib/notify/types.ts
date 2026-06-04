@@ -6,21 +6,21 @@ export interface Notifier {
 
 export function buildApprovalEmail(p: { eventName: string; name: string; payUrl: string }): EmailMessage {
   return {
-    subject: `You're approved for ${p.eventName}`,
-    text: `Hi ${p.name},\n\nGood news, you're approved to buy tickets for ${p.eventName}.\nComplete your purchase here (link expires soon):\n${p.payUrl}\n\nSee you there!`,
+    subject: `${p.eventName} başvurunuz onaylandı`,
+    text: `Merhaba ${p.name},\n\nGüzel haber, ${p.eventName} için bilet satın almanız onaylandı.\nSatın alma işleminizi buradan tamamlayabilirsiniz (bağlantının süresi yakında dolacaktır):\n${p.payUrl}\n\nEtkinlikte görüşmek üzere!`,
   };
 }
 
 export function buildRejectionEmail(p: { eventName: string; name: string }): EmailMessage {
   return {
-    subject: `Update on your ${p.eventName} application`,
-    text: `Hi ${p.name},\n\nThank you for your interest in ${p.eventName}. Unfortunately we are not able to offer you tickets at this time.\n\nKind regards.`,
+    subject: `${p.eventName} başvurunuz hakkında`,
+    text: `Merhaba ${p.name},\n\n${p.eventName} etkinliğine gösterdiğiniz ilgi için teşekkür ederiz. Maalesef şu anda size bilet sunamıyoruz.\n\nSaygılarımızla.`,
   };
 }
 
 export function buildConfirmationEmail(p: { eventName: string; name: string; ticketQuantity: number }): EmailMessage {
   return {
-    subject: `Your ${p.eventName} tickets are confirmed`,
-    text: `Hi ${p.name},\n\nYour payment is confirmed. You have ${p.ticketQuantity} ticket(s) for ${p.eventName}.\nBring your ID to the entrance.\n\nSee you there!`,
+    subject: `${p.eventName} biletleriniz onaylandı`,
+    text: `Merhaba ${p.name},\n\nÖdemeniz alındı. ${p.eventName} için ${p.ticketQuantity} adet biletiniz bulunuyor.\nGirişte kimliğinizi yanınızda bulundurunuz.\n\nEtkinlikte görüşmek üzere!`,
   };
 }

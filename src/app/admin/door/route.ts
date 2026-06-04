@@ -6,7 +6,7 @@ import { toCsv } from "@/lib/csv";
 
 export async function GET() {
   const session = await getSession();
-  if (!session.adminId) return new NextResponse("Unauthorized", { status: 401 });
+  if (!session.adminId) return new NextResponse("Yetkisiz", { status: 401 });
 
   const paid = await prisma.application.findMany({
     where: { status: Status.PAID },
@@ -14,7 +14,7 @@ export async function GET() {
   });
 
   const csv = toCsv(
-    ["Buyer", "Email", "Tickets", "Guests"],
+    ["Alıcı", "E-posta", "Bilet", "Misafirler"],
     paid.map((a) => [
       a.name,
       a.email,
@@ -26,7 +26,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": 'attachment; filename="door-list.csv"',
+      "content-disposition": 'attachment; filename="kapi-listesi.csv"',
     },
   });
 }

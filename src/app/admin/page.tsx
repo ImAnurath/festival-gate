@@ -5,6 +5,13 @@ import { approveAction, rejectAction } from "./actions";
 
 const STATUSES = ["PENDING", "APPROVED", "PAID", "REJECTED"] as const;
 
+const STATUS_LABELS: Record<(typeof STATUSES)[number], string> = {
+  PENDING: "Beklemede",
+  APPROVED: "Onaylandı",
+  PAID: "Ödendi",
+  REJECTED: "Reddedildi",
+};
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -27,30 +34,30 @@ export default async function AdminPage({
   return (
     <main className="mx-auto max-w-5xl p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Applications</h1>
+        <h1 className="text-2xl font-bold">Başvurular</h1>
         <a href="/admin/door" className="underline">
-          Download paid attendees (CSV)
+          Ödeyen katılımcıları indir (CSV)
         </a>
       </div>
       <nav className="mt-4 space-x-3">
         <a href="/admin" className="underline">
-          All
+          Tümü
         </a>
         {STATUSES.map((s) => (
           <a key={s} href={`/admin?status=${s}`} className="underline">
-            {s}
+            {STATUS_LABELS[s]}
           </a>
         ))}
       </nav>
       <table className="mt-6 w-full text-sm">
         <thead>
           <tr className="text-left">
-            <th>Name</th>
-            <th>Email</th>
-            <th>Social</th>
-            <th>Qty</th>
-            <th>Guests</th>
-            <th>Status</th>
+            <th>Ad</th>
+            <th>E-posta</th>
+            <th>Sosyal</th>
+            <th>Adet</th>
+            <th>Misafirler</th>
+            <th>Durum</th>
             <th></th>
           </tr>
         </thead>
@@ -62,20 +69,20 @@ export default async function AdminPage({
               <td>{a.socialTags}</td>
               <td>{a.ticketQuantity}</td>
               <td>{(JSON.parse(a.guestNames) as string[]).join(", ")}</td>
-              <td>{a.status}</td>
+              <td>{STATUS_LABELS[a.status]}</td>
               <td className="space-x-2 py-1">
                 {a.status === "PENDING" && (
                   <>
                     <form action={approveAction} className="inline">
                       <input type="hidden" name="id" value={a.id} />
                       <button className="bg-green-700 px-2 py-1 text-white">
-                        Approve
+                        Onayla
                       </button>
                     </form>
                     <form action={rejectAction} className="inline">
                       <input type="hidden" name="id" value={a.id} />
                       <button className="bg-red-700 px-2 py-1 text-white">
-                        Reject
+                        Reddet
                       </button>
                     </form>
                   </>

@@ -11,10 +11,11 @@ export default async function Home({
   if (submitted) {
     return (
       <main className="mx-auto max-w-lg p-8">
-        <h1 className="text-2xl font-bold">Thank you</h1>
+        <h1 className="text-2xl font-bold">Teşekkürler</h1>
         <p className="mt-4">
-          Your application for {config.eventName} has been received. If approved,
-          you&apos;ll get an email with a link to buy your tickets.
+          {config.eventName} için başvurunuz alındı. Onaylanırsanız,
+          biletlerinizi satın almanız için size bir e-posta bağlantısı
+          göndereceğiz.
         </p>
       </main>
     );
@@ -22,7 +23,7 @@ export default async function Home({
 
   return (
     <main className="mx-auto max-w-lg p-8">
-      <h1 className="text-2xl font-bold">Apply for {config.eventName}</h1>
+      <h1 className="text-2xl font-bold">{config.eventName} için Başvuru</h1>
       <div className="mt-6">
         <ApplyForm maxTickets={config.maxTicketsPerBuyer} />
       </div>

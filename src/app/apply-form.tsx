@@ -13,16 +13,16 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
 
   return (
     <form action={action} className="space-y-4">
-      <input name="name" placeholder="Full name" required className="w-full border p-2" />
-      <input name="email" type="email" placeholder="Email" required className="w-full border p-2" />
+      <input name="name" placeholder="Ad Soyad" required className="w-full border p-2" />
+      <input name="email" type="email" placeholder="E-posta" required className="w-full border p-2" />
       <input
         name="socialTags"
-        placeholder="Your public social handles (e.g. @you on Instagram)"
+        placeholder="Herkese açık sosyal medya hesaplarınız (örn. Instagram'da @siz)"
         required
         className="w-full border p-2"
       />
       <label className="block">
-        Tickets
+        Bilet sayısı
         <select
           name="ticketQuantity"
           value={quantity}
@@ -40,7 +40,7 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
         <input
           key={i}
           name="guestNames"
-          placeholder={`Guest ${i + 1} first name`}
+          placeholder={`${i + 1}. misafirin adı`}
           required
           className="w-full border p-2"
         />
@@ -54,12 +54,13 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
       />
       <label className="block text-sm text-gray-600">
         <input type="checkbox" required className="mr-2" />
-        I consent to my data (and my guests&apos; first names, with their permission)
-        being stored for event entry, and deleted after the event.
+        Verilerimin (ve izinleriyle birlikte misafirlerimin adlarının)
+        etkinlik girişi için saklanmasını ve etkinlik sonrasında silinmesini
+        kabul ediyorum.
       </label>
       {state.error && <p className="text-red-600">{state.error}</p>}
       <button disabled={pending} className="bg-black px-4 py-2 text-white">
-        {pending ? "Submitting..." : "Apply"}
+        {pending ? "Gönderiliyor..." : "Başvur"}
       </button>
     </form>
   );
