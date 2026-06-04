@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
+}
+
+model Application {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  name              String
+  email             String
+  socialTags        String
+  ticketQuantity    Int
+  guestNames        String   // JSON-encoded string[] (SQLite has no array type)
+  status            Status   @default(PENDING)
+  payToken          String?  @unique
+  payTokenExpiresAt DateTime?
+  amount            Int?
+  paymentRef        String?
+  paidAt            DateTime?
+  reviewNote        String?
+}
+
+model AdminUser {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+}
