@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { config } from "./config";
-import { approve, reject, assertPayable } from "./state-machine";
+import { approve, reject } from "./state-machine";
 import { generatePayToken, expiryFromNow } from "./token";
 
 export type CreateInput = {
@@ -42,23 +42,21 @@ export async function rejectApplication(id: string) {
   return prisma.application.update({ where: { id }, data: { status: next } });
 }
 
-export async function markPaidByToken(
-  payToken: string,
-  paymentRef: string,
-  amount: number,
-) {
-  const app = await prisma.application.findUnique({ where: { payToken } });
-  if (!app) throw new Error("Unknown payment token");
-  assertPayable(
-    {
-      status: app.status as Parameters<typeof assertPayable>[0]["status"],
-      payTokenExpiresAt: app.payTokenExpiresAt,
-      paidAt: app.paidAt,
+export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
+  const now = new Date();
+  const result = await prisma.application.updateMany({
+    where: {
+      payToken,
+      status: "APPROVED",
+      paidAt: null,
+      payTokenExpiresAt: { gt: now },
     },
-    new Date(),
-  );
-  return prisma.application.update({
-    where: { id: app.id },
-    data: { status: "PAID", paymentRef, amount, paidAt: new Date() },
+    data: { status: "PAID", paymentRef, amount, paidAt: now },
   });
+  if (result.count === 0) {
+    throw new Error(
+      "Application is not payable: unknown token, not approved, expired, or already paid"
+    );
+  }
+  return prisma.application.findUniqueOrThrow({ where: { payToken } });
 }

@@ -56,6 +56,17 @@ describe("application use-cases", () => {
     await expect(markPaidByToken("nope", "x", 1000)).rejects.toThrow();
   });
 
+  it("markPaidByToken refuses payment after token expiry", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    // Force the token to be expired
+    await prisma.application.update({
+      where: { id: approved.id },
+      data: { payTokenExpiresAt: new Date(Date.now() - 1000) },
+    });
+    await expect(markPaidByToken(approved.payToken!, "x", 1000)).rejects.toThrow();
+  });
+
   it("reject moves to REJECTED", async () => {
     const a = await createApplication(input);
     const r = await rejectApplication(a.id);
