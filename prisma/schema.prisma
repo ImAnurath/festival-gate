@@ -18,6 +18,7 @@ model Application {
   createdAt         DateTime @default(now())
   name              String
   email             String
+  phone             String?
   socialTags        String
   ticketQuantity    Int
   guestNames        String   // JSON-encoded string[] (kept as text for simplicity)
