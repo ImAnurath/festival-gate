@@ -22,6 +22,11 @@ export default function Reveal({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Fallback: if IntersectionObserver is unavailable, just show.
+    if (typeof IntersectionObserver === "undefined") {
+      setShown(true);
+      return;
+    }
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -29,7 +34,9 @@ export default function Reveal({
           io.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+      // threshold 0 = fire as soon as any part enters; trigger a little before
+      // the element reaches the very bottom edge of the viewport.
+      { threshold: 0, rootMargin: "0px 0px -12% 0px" }
     );
     io.observe(el);
     return () => io.disconnect();

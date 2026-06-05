@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 type Photo = { src: string; alt: string };
 
 export default function Gallery({ images }: { images: readonly Photo[] }) {
   const [open, setOpen] = useState<number | null>(null);
+  const touchX = useRef<number | null>(null);
 
   const close = useCallback(() => setOpen(null), []);
   const go = useCallback(
@@ -14,6 +15,17 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
       setOpen((i) => (i === null ? i : (i + dir + images.length) % images.length)),
     [images.length]
   );
+
+  // swipe left/right to swap on touch devices
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchX.current = e.changedTouches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
+    touchX.current = null;
+  };
 
   useEffect(() => {
     if (open === null) return;
@@ -59,6 +71,8 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
           aria-modal="true"
           aria-label="Fotoğraf görüntüleyici"
           onClick={close}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
           className="lb-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-ink/92 p-4 backdrop-blur-sm"
         >
           {/* close */}
@@ -66,7 +80,7 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
             type="button"
             onClick={close}
             aria-label="Kapat"
-            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream"
+            className="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-ink/40 text-cream/90 backdrop-blur-sm transition-colors hover:bg-ink/70 hover:text-cream"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />
@@ -78,7 +92,7 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
             type="button"
             onClick={(e) => { e.stopPropagation(); go(-1); }}
             aria-label="Önceki"
-            className="absolute left-2 flex h-12 w-12 items-center justify-center rounded-full text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream sm:left-6"
+            className="absolute left-2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-ink/40 text-cream/90 backdrop-blur-sm transition-colors hover:bg-ink/70 hover:text-cream sm:left-6"
           >
             <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 5l-7 7 7 7" />
@@ -114,7 +128,7 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
             type="button"
             onClick={(e) => { e.stopPropagation(); go(1); }}
             aria-label="Sonraki"
-            className="absolute right-2 flex h-12 w-12 items-center justify-center rounded-full text-cream/80 transition-colors hover:bg-cream/10 hover:text-cream sm:right-6"
+            className="absolute right-2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-ink/40 text-cream/90 backdrop-blur-sm transition-colors hover:bg-ink/70 hover:text-cream sm:right-6"
           >
             <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 5l7 7-7 7" />
