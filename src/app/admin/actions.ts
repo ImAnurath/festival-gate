@@ -5,18 +5,15 @@ import { requireAdmin } from "@/lib/session";
 import { config } from "@/lib/config";
 import { approveApplication, rejectApplication, reissuePayLink } from "@/lib/applications";
 import { notify } from "@/lib/notify";
-import { buildApprovalEmail, buildRejectionEmail } from "@/lib/notify/types";
+import { dispatchPayLink } from "@/lib/notify/dispatch";
+import { buildRejectionEmail } from "@/lib/notify/types";
 
 export async function approveAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const app = await approveApplication(id);
   const payUrl = `${config.appUrl}/pay/${app.payToken}`;
-  await notify(app.email, buildApprovalEmail({
-    eventName: config.eventName,
-    name: app.name,
-    payUrl,
-  }));
+  await dispatchPayLink(app, payUrl);
   revalidatePath("/admin");
 }
 
@@ -25,11 +22,7 @@ export async function resendLinkAction(formData: FormData) {
   const id = String(formData.get("id"));
   const app = await reissuePayLink(id);
   const payUrl = `${config.appUrl}/pay/${app.payToken}`;
-  await notify(app.email, buildApprovalEmail({
-    eventName: config.eventName,
-    name: app.name,
-    payUrl,
-  }));
+  await dispatchPayLink(app, payUrl);
   revalidatePath("/admin");
 }
 
