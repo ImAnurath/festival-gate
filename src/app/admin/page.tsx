@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { config } from "@/lib/config";
 import { getSession } from "@/lib/session";
-import { approveAction, rejectAction } from "./actions";
+import { approveAction, rejectAction, resendLinkAction } from "./actions";
+import CopyLink from "@/components/copy-link";
 
 const STATUSES = ["PENDING", "APPROVED", "PAID", "REJECTED"] as const;
 
@@ -129,6 +131,17 @@ export default async function AdminPage({
                         <input type="hidden" name="id" value={a.id} />
                         <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
                           Reddet
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                  {a.status === "APPROVED" && a.payToken && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CopyLink url={`${config.appUrl}/pay/${a.payToken}`} />
+                      <form action={resendLinkAction}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
+                          Yeniden gönder
                         </button>
                       </form>
                     </div>

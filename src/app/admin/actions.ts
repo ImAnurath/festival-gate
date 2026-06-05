@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/session";
 import { config } from "@/lib/config";
-import { approveApplication, rejectApplication } from "@/lib/applications";
+import { approveApplication, rejectApplication, reissuePayLink } from "@/lib/applications";
 import { getNotifier } from "@/lib/notify";
 import { buildApprovalEmail, buildRejectionEmail } from "@/lib/notify/types";
 
@@ -11,6 +11,19 @@ export async function approveAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   const app = await approveApplication(id);
+  const payUrl = `${config.appUrl}/pay/${app.payToken}`;
+  await getNotifier().send(app.email, buildApprovalEmail({
+    eventName: config.eventName,
+    name: app.name,
+    payUrl,
+  }));
+  revalidatePath("/admin");
+}
+
+export async function resendLinkAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const app = await reissuePayLink(id);
   const payUrl = `${config.appUrl}/pay/${app.payToken}`;
   await getNotifier().send(app.email, buildApprovalEmail({
     eventName: config.eventName,

@@ -42,6 +42,22 @@ export async function rejectApplication(id: string) {
   return prisma.application.update({ where: { id }, data: { status: next } });
 }
 
+// Re-issue a fresh payment token + expiry for an already-approved application
+// (resend a link, or replace one that expired). The previous link stops working.
+export async function reissuePayLink(id: string) {
+  const app = await prisma.application.findUniqueOrThrow({ where: { id } });
+  if (app.status !== "APPROVED") {
+    throw new Error("Yalnızca onaylanmış başvurular için bağlantı yenilenebilir");
+  }
+  return prisma.application.update({
+    where: { id },
+    data: {
+      payToken: generatePayToken(),
+      payTokenExpiresAt: expiryFromNow(config.payTokenTtlHours),
+    },
+  });
+}
+
 export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
   const now = new Date();
   const result = await prisma.application.updateMany({
