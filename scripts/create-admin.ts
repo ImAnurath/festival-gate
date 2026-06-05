@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 async function main() {
   const [email, password] = process.argv.slice(2);
@@ -10,8 +10,7 @@ async function main() {
     process.exit(1);
   }
 
-  const url = process.env.DATABASE_URL ?? "file:./dev.db";
-  const adapter = new PrismaBetterSqlite3({ url });
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
   const prisma = new PrismaClient({ adapter });
 
   await prisma.adminUser.upsert({

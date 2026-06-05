@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Status {
@@ -20,7 +20,7 @@ model Application {
   email             String
   socialTags        String
   ticketQuantity    Int
-  guestNames        String   // JSON-encoded string[] (SQLite has no array type)
+  guestNames        String   // JSON-encoded string[] (kept as text for simplicity)
   status            Status   @default(PENDING)
   payToken          String?  @unique
   payTokenExpiresAt DateTime?

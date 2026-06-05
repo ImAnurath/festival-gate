@@ -5,7 +5,7 @@ Festival Gate is an approval-gated ticketing app for private or invitation-style
 ## Tech stack
 
 - **Next.js 16** with the App Router
-- **Prisma 7** with SQLite in development, using the `@prisma/adapter-better-sqlite3` driver adapter
+- **Prisma 7** with PostgreSQL, using the `@prisma/adapter-pg` driver adapter (local Postgres in dev, hosted Postgres in production)
 - **iron-session 8** for server-side session management
 - **Zod 4** for schema validation
 - **Vitest** for unit and integration tests
@@ -30,18 +30,24 @@ These are recent major versions with breaking changes. See `AGENTS.md` for versi
    - `RESEND_API_KEY` and `MAIL_FROM` - required when `NOTIFIER=resend`
    - `NEXT_PUBLIC_APP_URL` - the public base URL; used when constructing payment links and the callback URL
 
-3. Apply the database migrations (this creates `dev.db`):
-   ```bash
-   npx prisma migrate dev
-   ```
+3. Provision a PostgreSQL database and set `DATABASE_URL` in `.env` to its connection string.
+   - **Local:** create an empty database (e.g. with DBeaver, or `createdb festival_gate`), then set `DATABASE_URL="postgresql://USER:PASS@localhost:5432/festival_gate?schema=public"`.
+   - **Production:** use a hosted Postgres (Vercel Postgres, Neon, or Supabase) and paste its connection string.
 
-4. Create the admin account:
+   Then apply the migrations and generate the client:
+   ```bash
+   npx prisma migrate deploy
+   npx prisma generate
+   ```
+   (`prisma migrate deploy` applies the committed migration in `prisma/migrations`. Use `prisma migrate dev` only when changing the schema.)
+
+4. Create the admin account (uses `DATABASE_URL` from `.env`):
    ```bash
    npx tsx scripts/create-admin.ts admin@example.com "a-strong-password"
    ```
-   On Windows, if the script cannot find the database, set the variable first:
+   On Windows, if the variable is not picked up, set it for the session first:
    ```powershell
-   $env:DATABASE_URL="file:./dev.db"
+   $env:DATABASE_URL="postgresql://USER:PASS@localhost:5432/festival_gate?schema=public"
    npx tsx scripts/create-admin.ts admin@example.com "a-strong-password"
    ```
 
@@ -80,7 +86,16 @@ Applications move through four states:
 npm test
 ```
 
-Vitest runs all unit and integration tests. DB-backed tests use `test.db`; the test environment variables are injected by `vitest.config.ts`. The suite should report 40 tests passing.
+Vitest runs all unit and integration tests; the test environment variables are injected by `vitest.config.ts`. The pure-logic suites (state machine, validation, payment, CSV, etc.) always run. The DB-backed use-case tests need a PostgreSQL test database: they run when one is reachable and **skip gracefully otherwise**, so `npm test` stays green without a database. To run them, create a test database and point the runner at it:
+
+```bash
+createdb festival_gate_test
+# DATABASE_URL_TEST overrides the test connection string
+DATABASE_URL_TEST="postgresql://USER:PASS@localhost:5432/festival_gate_test?schema=public" npx prisma migrate deploy
+DATABASE_URL_TEST="postgresql://USER:PASS@localhost:5432/festival_gate_test?schema=public" npm test
+```
+
+With a test database present, all 40 tests run; without one, 33 run and 7 skip.
 
 ## Switching to iyzico (production payments)
 
@@ -104,7 +119,7 @@ No other call sites change because everything goes through `getPaymentProvider()
 
 ## Production notes
 
-**Database:** the repo uses SQLite with `@prisma/adapter-better-sqlite3`, which is fine for a single-machine deployment serving a festival of typical size. For a high-concurrency or multi-server setup, switch to Postgres: change the `datasource` provider in `prisma/schema.prisma`, use `@prisma/adapter-pg` in `src/lib/prisma.ts`, and update `DATABASE_URL`.
+**Database:** the app uses PostgreSQL via `@prisma/adapter-pg`. On Vercel (or any serverless host) a local file database will not work, so provision a hosted Postgres (Vercel Postgres, Neon, or Supabase), set `DATABASE_URL` to its connection string in the host's environment variables, and run `npx prisma migrate deploy` against it once. `guestNames` is stored as a JSON-encoded text column for simplicity.
 
 **App URL:** set `NEXT_PUBLIC_APP_URL` to the real public domain. It is embedded in every payment link and in the callback URL passed to the payment provider, so an incorrect value will break the payment flow.
 
