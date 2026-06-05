@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
 import { assertPayable } from "@/lib/state-machine";
+import Image from "next/image";
 import BrandLogo from "@/components/brand-logo";
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -101,6 +102,32 @@ export default async function PayPage({
         Ödeme güvenli sayfada tamamlanır. Onaylandığında size bir e-posta
         gönderilir.
       </p>
+
+      <p className="mt-3 text-xs leading-relaxed text-moss/70">
+        &quot;Şimdi öde&quot; diyerek{" "}
+        <a
+          href="/mesafeli-satis-sozlesmesi"
+          className="text-hazel underline underline-offset-4 hover:text-ink"
+        >
+          Mesafeli Satış Sözleşmesi
+        </a>{" "}
+        ve{" "}
+        <a
+          href="/teslimat-iade"
+          className="text-hazel underline underline-offset-4 hover:text-ink"
+        >
+          Teslimat ve İade Şartları
+        </a>
+        &apos;nı kabul etmiş olursunuz. Biletler iade edilemez.
+      </p>
+
+      <Image
+        src="/payment/iyzico-ile-ode.svg"
+        alt="iyzico ile öde"
+        width={210}
+        height={31}
+        className="mx-auto mt-6 h-auto w-[180px]"
+      />
     </Shell>
   );
 }

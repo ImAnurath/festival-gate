@@ -4,6 +4,7 @@ import ApplyForm from "./apply-form";
 import Gallery from "@/components/gallery";
 import Reveal from "@/components/reveal";
 import BrandLogo from "@/components/brand-logo";
+import SiteFooter from "@/components/site-footer";
 import { YaylaRidges, Divider } from "@/components/ornaments";
 
 export default async function Home({
@@ -140,30 +141,7 @@ export default async function Home({
       </section>
 
       {/* ---------- Footer ---------- */}
-      <footer className="border-t border-ink/10 px-6 py-10">
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-2 text-center text-sm text-moss">
-          <BrandLogo size={120} className="mx-auto" />
-          <p>{EVENT.city}</p>
-          <a
-            href={EVENT.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-hazel underline underline-offset-4 hover:text-ink"
-          >
-            Instagram
-          </a>
-          <p className="mt-3 max-w-md text-xs leading-relaxed text-moss/70">
-            Başvuru bilgileriniz yalnızca etkinlik girişi için saklanır ve
-            etkinlik sonrasında silinir.
-          </p>
-          <a
-            href="/admin"
-            className="mt-4 text-[0.7rem] uppercase tracking-[0.2em] text-moss/40 transition-colors hover:text-moss"
-          >
-            Yönetim
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }
