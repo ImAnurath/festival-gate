@@ -46,3 +46,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local project docs (specs, plans, handoff) — kept locally, not tracked
+/docs
