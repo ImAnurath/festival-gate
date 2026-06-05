@@ -17,6 +17,7 @@ export async function submitApplication(
   const parsed = schema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
+    phone: formData.get("phone") ?? "",
     socialTags: formData.get("socialTags"),
     ticketQuantity: formData.get("ticketQuantity"),
     guestNames,
@@ -30,6 +31,7 @@ export async function submitApplication(
   await createApplication({
     name: parsed.data.name,
     email: parsed.data.email,
+    phone: parsed.data.phone,
     socialTags: parsed.data.socialTags,
     ticketQuantity: parsed.data.ticketQuantity,
     guestNames: parsed.data.guestNames,

@@ -6,6 +6,7 @@ import { generatePayToken, expiryFromNow } from "./token";
 export type CreateInput = {
   name: string;
   email: string;
+  phone?: string | null;
   socialTags: string;
   ticketQuantity: number;
   guestNames: string[];
@@ -16,6 +17,7 @@ export async function createApplication(input: CreateInput) {
     data: {
       name: input.name,
       email: input.email,
+      phone: input.phone ?? null,
       socialTags: input.socialTags,
       ticketQuantity: input.ticketQuantity,
       guestNames: JSON.stringify(input.guestNames),

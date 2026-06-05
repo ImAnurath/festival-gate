@@ -1,10 +1,25 @@
 import { z } from "zod";
+import { normalizeTrPhone } from "./phone";
 
 export function buildApplicationSchema(maxTickets: number) {
   return z
     .object({
       name: z.string().trim().min(1, "Ad soyad gerekli").max(120, "Ad soyad çok uzun"),
       email: z.email("Geçerli bir e-posta adresi girin"),
+      phone: z
+        .string()
+        .trim()
+        .optional()
+        .default("")
+        .transform((v, ctx) => {
+          if (v === "") return null;
+          const e164 = normalizeTrPhone(v);
+          if (!e164) {
+            ctx.addIssue({ code: "custom", message: "Geçerli bir telefon numarası girin" });
+            return z.NEVER;
+          }
+          return e164;
+        }),
       socialTags: z
         .string()
         .trim()
