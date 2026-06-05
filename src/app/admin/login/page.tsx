@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { login } from "./actions";
+import BrandLogo from "@/components/brand-logo";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, { error: "" });
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="w-full max-w-sm">
+        <BrandLogo size={96} className="mb-5" />
         <p className="text-xs uppercase tracking-[0.28em] text-moss">
           KİNDZİ FEST
         </p>

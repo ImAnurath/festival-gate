@@ -2,12 +2,15 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
 import { assertPayable } from "@/lib/state-machine";
-import { Hazelnut } from "@/components/ornaments";
+import BrandLogo from "@/components/brand-logo";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
-      <div className="rise w-full max-w-md text-center">{children}</div>
+      <div className="rise w-full max-w-md text-center">
+        <BrandLogo size={120} className="mx-auto mb-8" />
+        {children}
+      </div>
     </main>
   );
 }
@@ -36,8 +39,7 @@ export default async function PayPage({
   if (app.status === "PAID") {
     return (
       <Shell>
-        <Hazelnut className="mx-auto h-10 w-10 text-hazel" />
-        <h1 className="mt-6 font-display text-3xl font-semibold text-ink">
+        <h1 className="font-display text-3xl font-semibold text-ink">
           Ödemeniz alındı
         </h1>
         <p className="mt-4 leading-relaxed text-moss">

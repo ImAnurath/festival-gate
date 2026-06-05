@@ -3,7 +3,8 @@ import { EVENT } from "@/lib/event";
 import ApplyForm from "./apply-form";
 import Gallery from "@/components/gallery";
 import Reveal from "@/components/reveal";
-import { YaylaRidges, Divider, Hazelnut } from "@/components/ornaments";
+import BrandLogo from "@/components/brand-logo";
+import { YaylaRidges, Divider } from "@/components/ornaments";
 
 export default async function Home({
   searchParams,
@@ -16,7 +17,7 @@ export default async function Home({
     return (
       <main className="flex flex-1 items-center justify-center px-6 py-24">
         <div className="rise max-w-xl text-center">
-          <Hazelnut className="mx-auto h-10 w-10 text-hazel" />
+          <BrandLogo size={150} className="mx-auto" />
           <h1 className="mt-6 font-display text-5xl font-semibold tracking-tight text-ink">
             Başvurunuz alındı
           </h1>
@@ -36,10 +37,8 @@ export default async function Home({
   return (
     <main className="flex-1">
       {/* ---------- Hero ---------- */}
-      <section className="mx-auto max-w-3xl px-6 pt-20 pb-10 text-center sm:pt-28">
-        <p className="rise text-xs uppercase tracking-[0.32em] text-moss">
-          {EVENT.presenter} sunar · {EVENT.city}
-        </p>
+      <section className="mx-auto max-w-3xl px-6 pt-16 pb-10 text-center sm:pt-20">
+        <BrandLogo size={180} priority className="rise mx-auto" />
 
         <h1
           className="rise mt-6 font-display text-6xl font-semibold leading-[0.92] tracking-tight text-ink sm:text-8xl"
@@ -143,7 +142,7 @@ export default async function Home({
       {/* ---------- Footer ---------- */}
       <footer className="border-t border-ink/10 px-6 py-10">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-2 text-center text-sm text-moss">
-          <p className="font-display text-base text-ink">{EVENT.presenter}</p>
+          <BrandLogo size={120} className="mx-auto" />
           <p>{EVENT.city}</p>
           <a
             href={EVENT.instagram}

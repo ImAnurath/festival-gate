@@ -18,7 +18,7 @@ const hanken = Hanken_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "KİNDZİ FEST · Fatsa, Ordu",
+  title: "KİNDZİ FEST",
   description:
     "KİNDZİ FEST: Fatsa'da bir günlük Karadeniz şenliği. Gündüz atölyeler ve panayır, gece DJ'ler ve Soner Arıca. Katılım başvuru ile.",
 };

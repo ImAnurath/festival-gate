@@ -4,6 +4,7 @@ import { config } from "@/lib/config";
 import { getSession } from "@/lib/session";
 import { approveAction, rejectAction, resendLinkAction } from "./actions";
 import CopyLink from "@/components/copy-link";
+import BrandLogo from "@/components/brand-logo";
 
 const STATUSES = ["PENDING", "APPROVED", "PAID", "REJECTED"] as const;
 
@@ -43,13 +44,16 @@ export default async function AdminPage({
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-moss">
-            KİNDZİ FEST
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight text-ink">
-            Başvurular
-          </h1>
+        <div className="flex items-center gap-3">
+          <BrandLogo size={64} />
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-moss">
+              KİNDZİ FEST
+            </p>
+            <h1 className="font-display text-4xl font-semibold tracking-tight text-ink">
+              Başvurular
+            </h1>
+          </div>
         </div>
         <a
           href="/admin/door"
