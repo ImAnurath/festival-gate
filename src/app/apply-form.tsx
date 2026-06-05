@@ -30,6 +30,22 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
       </div>
 
       <div>
+        <label className={labelClass} htmlFor="phone">
+          Telefon (WhatsApp)
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          placeholder="05XX XXX XX XX"
+          className="field"
+        />
+        <p className="mt-1.5 text-xs leading-relaxed text-moss/70">
+          İsteğe bağlı. Bilet bağlantınızı WhatsApp&apos;tan göndeririz.
+        </p>
+      </div>
+
+      <div>
         <label className={labelClass} htmlFor="socialTags">
           Sosyal medya
         </label>
