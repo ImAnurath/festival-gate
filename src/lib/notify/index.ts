@@ -1,5 +1,5 @@
 import { config } from "../config";
-import type { Notifier } from "./types";
+import type { Notifier, EmailMessage } from "./types";
 import { ResendNotifier, ConsoleNotifier } from "./resend";
 
 export function getNotifier(): Notifier {
@@ -10,4 +10,15 @@ export function getNotifier(): Notifier {
     return new ResendNotifier(apiKey, from);
   }
   return new ConsoleNotifier();
+}
+
+// Best-effort send: the email is a courtesy, never the source of truth. A send
+// failure (Resend down, unverified domain, rate limit) must never break the
+// state change that already happened. The admin copy-link button is the fallback.
+export async function notify(to: string, message: EmailMessage): Promise<void> {
+  try {
+    await getNotifier().send(to, message);
+  } catch (err) {
+    console.error(`[notify] send failed to=${to} subject="${message.subject}"`, err);
+  }
 }

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
 import { markPaidByToken } from "@/lib/applications";
-import { getNotifier } from "@/lib/notify";
+import { notify } from "@/lib/notify";
 import { buildConfirmationEmail } from "@/lib/notify/types";
 
 export async function POST(req: NextRequest) {
@@ -28,18 +28,14 @@ export async function POST(req: NextRequest) {
 
   // Payment is recorded. The confirmation email is best-effort; a send failure
   // must never undo or mask the paid result.
-  try {
-    await getNotifier().send(
-      paid.email,
-      buildConfirmationEmail({
-        eventName: config.eventName,
-        name: paid.name,
-        ticketQuantity: paid.ticketQuantity,
-      })
-    );
-  } catch (err) {
-    console.error("Confirmation email failed for", paid.email, err);
-  }
+  await notify(
+    paid.email,
+    buildConfirmationEmail({
+      eventName: config.eventName,
+      name: paid.name,
+      ticketQuantity: paid.ticketQuantity,
+    })
+  );
 
   return NextResponse.json({ ok: true });
 }
