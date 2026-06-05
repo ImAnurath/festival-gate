@@ -24,6 +24,7 @@ export default defineConfig({
       PAY_TOKEN_TTL_HOURS: "72",
       PAYMENT_PROVIDER: "stub",
       NOTIFIER: "console",
+      WHATSAPP_PROVIDER: "console",
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
     },
   },
