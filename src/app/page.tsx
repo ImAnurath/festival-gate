@@ -84,7 +84,7 @@ export default async function Home({
       {/* ---------- Program ---------- */}
       <section className="mx-auto max-w-3xl px-6 py-12">
         <Divider />
-        <div className="mt-12 grid gap-10 sm:grid-cols-2">
+        <div className="mt-12 grid gap-10 text-center sm:grid-cols-2">
           {EVENT.program.map((p, i) => (
             <Reveal key={p.key} delay={i * 120}>
               <p className="text-xs uppercase tracking-[0.28em] text-hazel">
@@ -156,6 +156,12 @@ export default async function Home({
             Başvuru bilgileriniz yalnızca etkinlik girişi için saklanır ve
             etkinlik sonrasında silinir.
           </p>
+          <a
+            href="/admin"
+            className="mt-4 text-[0.7rem] uppercase tracking-[0.2em] text-moss/40 transition-colors hover:text-moss"
+          >
+            Yönetim
+          </a>
         </div>
       </footer>
     </main>

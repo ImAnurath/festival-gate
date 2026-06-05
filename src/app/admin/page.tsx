@@ -55,12 +55,20 @@ export default async function AdminPage({
             </h1>
           </div>
         </div>
-        <a
-          href="/admin/door"
-          className="rounded-sm border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:bg-ink hover:text-cream"
-        >
-          Ödeyen katılımcıları indir (CSV)
-        </a>
+        <div className="flex items-center gap-2">
+          <a
+            href="/"
+            className="rounded-sm px-3 py-2 text-sm text-moss transition-colors hover:text-ink"
+          >
+            Siteyi görüntüle
+          </a>
+          <a
+            href="/admin/door"
+            className="rounded-sm border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:bg-ink hover:text-cream"
+          >
+            Ödeyen katılımcıları indir (CSV)
+          </a>
+        </div>
       </div>
 
       <nav className="mt-6 flex flex-wrap gap-2 text-sm">
