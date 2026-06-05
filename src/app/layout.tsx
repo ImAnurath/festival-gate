@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Display: Fraunces, a high-contrast expressive serif (Turkish glyphs via latin-ext).
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  axes: ["opsz", "SOFT", "WONK"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Body/UI: Hanken Grotesk, clean and warm, full Turkish support.
+const hanken = Hanken_Grotesk({
+  variable: "--font-hanken",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Festival Bilet Başvurusu",
-  description: "Festival için bilet başvurusu ve ödeme",
+  title: "KİNDZİ FEST · Fatsa, Ordu",
+  description:
+    "KİNDZİ FEST: Fatsa'da bir günlük Karadeniz şenliği. Gündüz atölyeler ve panayır, gece DJ'ler ve Soner Arıca. Katılım başvuru ile.",
 };
 
 export default function RootLayout({
@@ -25,7 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${hanken.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

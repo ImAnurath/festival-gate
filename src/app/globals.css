@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  KİNDZİ FEST — "Yayla" design system.
+  Refined Karadeniz editorial: misty paper cream, deep highland green ink,
+  a single hazelnut accent (Ordu fındığı). Restraint over decoration.
+*/
+@theme {
+  --color-cream: #f3eee2; /* misty paper */
+  --color-cream-deep: #e9e2d1; /* slightly deeper panel */
+  --color-ink: #16332a; /* deep highland green, primary text */
+  --color-moss: #3b5849; /* muted green, secondary text */
+  --color-hazel: #ad5f26; /* Ordu hazelnut, the one accent */
+  --color-sea: #285f59; /* Black Sea teal, sparing */
+  --color-mist: #faf7ef; /* near-white wash for fields */
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-hanken);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* faint misty light pooling at the top, like fog over the yayla */
+  background-image: radial-gradient(
+    120% 70% at 50% -10%,
+    var(--color-mist) 0%,
+    color-mix(in oklab, var(--color-mist) 40%, var(--color-cream)) 35%,
+    var(--color-cream) 70%
+  );
+  background-attachment: fixed;
+}
+
+/* very fine paper grain for depth, kept barely-there */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-hazel) 30%, transparent);
+  color: var(--color-ink);
+}
+
+/* one orchestrated page-load: staggered rise */
+@keyframes yayla-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: yayla-rise 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* a slow horon sway for the hero line */
+@keyframes horon-sway {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.3deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0.3deg);
+  }
+}
+
+.sway {
+  animation: horon-sway 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .sway {
+    animation: none;
+  }
+}
+
+/* shared field styling for the application form */
+.field {
+  width: 100%;
+  background: var(--color-mist);
+  border: 1px solid color-mix(in oklab, var(--color-ink) 18%, transparent);
+  border-radius: 2px;
+  padding: 0.75rem 0.9rem;
+  color: var(--color-ink);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field::placeholder {
+  color: color-mix(in oklab, var(--color-moss) 70%, transparent);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--color-hazel);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-hazel) 18%, transparent);
 }
