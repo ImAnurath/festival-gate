@@ -84,10 +84,93 @@ body::after {
   animation: horon-sway 7s ease-in-out infinite;
 }
 
+/* scroll-reveal: sections ease in as they enter the viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* lightbox entrance */
+@keyframes lb-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lb-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.lb-backdrop {
+  animation: lb-fade 0.25s ease both;
+}
+
+.lb-figure {
+  animation: lb-pop 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* slow valley mist drift on the ridge motif */
+@keyframes mist-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translateX(12px);
+    opacity: 0.3;
+  }
+}
+
+.mist {
+  animation: mist-drift 9s ease-in-out infinite;
+}
+
+/* gentle glow on the hazelnut sun */
+@keyframes sun-pulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.sun {
+  animation: sun-pulse 6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise,
-  .sway {
+  .sway,
+  .mist,
+  .sun,
+  .lb-backdrop,
+  .lb-figure {
     animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 

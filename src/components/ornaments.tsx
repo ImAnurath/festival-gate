@@ -17,7 +17,7 @@ export function YaylaRidges({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
     >
       {/* low hazelnut sun, behind the front ridges */}
-      <circle cx="566" cy="78" r="13" className="text-hazel" fill="currentColor" opacity="0.85" />
+      <circle cx="566" cy="78" r="13" className="text-hazel sun" fill="currentColor" opacity="0.85" />
 
       {/* far ridge, dissolved in mist */}
       <path
@@ -45,7 +45,7 @@ export function YaylaRidges({ className }: { className?: string }) {
       />
 
       {/* drifting mist over the valley floor */}
-      <g stroke="currentColor" strokeLinecap="round" opacity="0.22">
+      <g className="mist" stroke="currentColor" strokeLinecap="round" opacity="0.22">
         <line x1="150" y1="168" x2="300" y2="168" strokeWidth="1.2" />
         <line x1="360" y1="176" x2="470" y2="176" strokeWidth="1.2" />
         <line x1="520" y1="166" x2="640" y2="166" strokeWidth="1.2" />

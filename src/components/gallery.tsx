@@ -59,7 +59,7 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
           aria-modal="true"
           aria-label="Fotoğraf görüntüleyici"
           onClick={close}
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/92 p-4 backdrop-blur-sm"
+          className="lb-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-ink/92 p-4 backdrop-blur-sm"
         >
           {/* close */}
           <button
@@ -87,8 +87,9 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
 
           {/* image */}
           <figure
+            key={open}
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[88vh] max-w-[92vw] flex-col items-center gap-3"
+            className="lb-figure flex max-h-[88vh] max-w-[92vw] flex-col items-center gap-3"
           >
             <div className="relative h-[78vh] w-[92vw] max-w-3xl">
               <Image

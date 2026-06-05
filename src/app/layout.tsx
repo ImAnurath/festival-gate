@@ -33,7 +33,13 @@ export default function RootLayout({
       lang="tr"
       className={`${fraunces.variable} ${hanken.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Without JS, scroll-reveal can't fire; keep all content visible. */}
+        <noscript>
+          <style>{`.reveal{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
+        {children}
+      </body>
     </html>
   );
 }

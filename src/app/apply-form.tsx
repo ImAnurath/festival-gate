@@ -102,7 +102,7 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
 
       <button
         disabled={pending}
-        className="w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-colors hover:bg-sea disabled:opacity-60"
+        className="w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea disabled:translate-y-0 disabled:opacity-60"
       >
         {pending ? "Gönderiliyor..." : "Başvuruyu gönder"}
       </button>

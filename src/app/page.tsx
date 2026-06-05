@@ -2,6 +2,7 @@ import { config } from "@/lib/config";
 import { EVENT } from "@/lib/event";
 import ApplyForm from "./apply-form";
 import Gallery from "@/components/gallery";
+import Reveal from "@/components/reveal";
 import { YaylaRidges, Divider, Hazelnut } from "@/components/ornaments";
 
 export default async function Home({
@@ -72,7 +73,7 @@ export default async function Home({
         >
           <a
             href="#basvuru"
-            className="inline-block rounded-sm bg-ink px-7 py-3 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-colors hover:bg-sea"
+            className="inline-block rounded-sm bg-ink px-7 py-3 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
           >
             Başvur
           </a>
@@ -85,30 +86,32 @@ export default async function Home({
       <section className="mx-auto max-w-3xl px-6 py-12">
         <Divider />
         <div className="mt-12 grid gap-10 sm:grid-cols-2">
-          {EVENT.program.map((p) => (
-            <div key={p.key}>
+          {EVENT.program.map((p, i) => (
+            <Reveal key={p.key} delay={i * 120}>
               <p className="text-xs uppercase tracking-[0.28em] text-hazel">
                 {p.kicker}
               </p>
               <p className="mt-3 font-display text-2xl text-ink">{p.time}</p>
               <h2 className="mt-1 text-lg font-semibold text-ink">{p.title}</h2>
               <p className="mt-2 leading-relaxed text-moss">{p.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* ---------- Venue gallery ---------- */}
       <section className="mx-auto max-w-5xl px-6 py-12">
-        <p className="text-center text-xs uppercase tracking-[0.28em] text-moss">
-          Deniz&apos;in Yeri&apos;nden
-        </p>
-        <p className="mt-2 text-center text-sm text-moss/70">
-          Büyütmek için bir fotoğrafa dokunun
-        </p>
-        <div className="mt-8">
-          <Gallery images={EVENT.gallery} />
-        </div>
+        <Reveal>
+          <p className="text-center text-xs uppercase tracking-[0.28em] text-moss">
+            Deniz&apos;in Yeri&apos;nden
+          </p>
+          <p className="mt-2 text-center text-sm text-moss/70">
+            Büyütmek için bir fotoğrafa dokunun
+          </p>
+          <div className="mt-8">
+            <Gallery images={EVENT.gallery} />
+          </div>
+        </Reveal>
       </section>
 
       {/* ---------- Application ---------- */}
@@ -117,22 +120,24 @@ export default async function Home({
         className="mx-auto max-w-xl scroll-mt-12 px-6 pb-24 pt-12"
       >
         <Divider className="mb-12" />
-        <h2 className="font-display text-4xl font-semibold tracking-tight text-ink">
-          Başvuru
-        </h2>
-        <p className="mt-4 leading-relaxed text-moss">
-          {EVENT.name} katılımı başvuru ile olur. Ad, e-posta ve herkese açık
-          sosyal medya hesabınızı bırakın. Başvurunuz değerlendirildikten sonra
-          onaylanırsanız, bilet alım bağlantınız e-posta ile gönderilir. Tek bir
-          başvuruyla yanınızdaki misafirler için de bilet alabilirsiniz.
-        </p>
-        <p className="mt-3 text-sm text-moss/80">
-          Bilet ücreti: <span className="font-semibold text-ink">{config.ticketPrice} TL</span> (kişi başı)
-        </p>
+        <Reveal>
+          <h2 className="font-display text-4xl font-semibold tracking-tight text-ink">
+            Başvuru
+          </h2>
+          <p className="mt-4 leading-relaxed text-moss">
+            {EVENT.name} katılımı başvuru ile olur. Ad, e-posta ve herkese açık
+            sosyal medya hesabınızı bırakın. Başvurunuz değerlendirildikten sonra
+            onaylanırsanız, bilet alım bağlantınız e-posta ile gönderilir. Tek bir
+            başvuruyla yanınızdaki misafirler için de bilet alabilirsiniz.
+          </p>
+          <p className="mt-3 text-sm text-moss/80">
+            Bilet ücreti: <span className="font-semibold text-ink">{config.ticketPrice} TL</span> (kişi başı)
+          </p>
 
-        <div className="mt-8">
-          <ApplyForm maxTickets={config.maxTicketsPerBuyer} />
-        </div>
+          <div className="mt-8">
+            <ApplyForm maxTickets={config.maxTicketsPerBuyer} />
+          </div>
+        </Reveal>
       </section>
 
       {/* ---------- Footer ---------- */}

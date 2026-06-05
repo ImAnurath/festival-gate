@@ -90,7 +90,7 @@ export default async function PayPage({
 
       <a
         href={session.url}
-        className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-colors hover:bg-sea"
+        className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
       >
         Şimdi öde
       </a>
