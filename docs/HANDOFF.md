@@ -28,6 +28,18 @@ Event: **12 Temmuz 2026, Pazar**. 09:00–18:00 atölyeler & panayır; 18:00–0
 - **Mobile** reviewed and fixed (reliable reveal, lightbox arrow z-index/contrast, swipe).
 - **Admin operation**: dashboard at `/admin`, filter pills, Onayla/Reddet; for APPROVED rows a **"Bağlantıyı kopyala"** button + **"Yeniden gönder"** (re-issues token + resends). Approve also auto-emails (console in dev).
 - **Database migrated SQLite → PostgreSQL** (`@prisma/adapter-pg`) for deployment, and **verified working end-to-end locally on Postgres**.
+- **DEPLOYED & LIVE on Vercel + Neon Postgres** (2026-06-05). Public form submit, redirect, and DB write verified live. See the Deployment section below.
+- **Discreet admin navigation**: subtle "Yönetim" link in the public footer → `/admin` (redirects to login when signed out, dashboard when signed in); "Siteyi görüntüle" link in the admin header → public site.
+- **Program section centered** so it matches the centered hero (was left-aligned, read as off-center).
+
+## Deployment (LIVE) — read before touching prod
+- **Live URL:** https://festival-gate.vercel.app (single Vercel project, on branch `main`, auto-deploys on push).
+- **Hosting:** Vercel (project owner: ImAnurath / ozan-berk-s-projects). **Database:** Neon Postgres, project "Festival Gate", branch `production`, endpoint `ep-patient-salad-a219jzlz` (region eu-central-1 / Frankfurt). The app uses the **pooled** endpoint (`-pooler`); migrations use the **direct** endpoint (drop `-pooler`).
+- **Secrets are NOT in this file or git.** Real values live only in: Vercel → Settings → Environment Variables, and the Neon dashboard. Env vars set on Vercel: `DATABASE_URL`, `SESSION_PASSWORD`, `EVENT_NAME`, `TICKET_PRICE` (500), `MAX_TICKETS_PER_BUYER` (6), `PAY_TOKEN_TTL_HOURS` (72), `PAYMENT_PROVIDER` (stub), `NOTIFIER` (console).
+- **App URL auto-resolves.** `src/lib/config.ts` prefers `NEXT_PUBLIC_APP_URL`, but falls back to Vercel's auto-provided `VERCEL_PROJECT_PRODUCTION_URL` (→ `https://festival-gate.vercel.app`) when it's missing/malformed. So `NEXT_PUBLIC_APP_URL` is intentionally NOT set on Vercel; the app derives the right domain itself. Trims whitespace + strips trailing slash + validates. Locally, `.env`'s `NEXT_PUBLIC_APP_URL=http://localhost:3000` is used.
+- **Prisma client on Vercel:** `package.json` has `"postinstall": "prisma generate"` (Vercel caches deps, so without this the client goes stale). Don't remove it.
+- **Running a migration against prod:** `DATABASE_URL="<direct, non-pooler Neon string>" npx prisma migrate deploy`. Idempotent. Get the string from Neon → Dashboard (production branch). `migrate deploy` only applies existing migrations; it does not create them.
+- **HARD-WON LESSON (do not repeat):** there were briefly **two** Vercel projects and **multiple** Neon databases from re-imports/branching, which caused 404s, "missing table" errors, and env-var drift. Now consolidated to **one** Vercel project + **one** Neon DB. If something behaves inconsistently, first confirm you're not looking at a duplicate project/DB. Leftover unused Neon DBs (`ep-long-water…`, `ep-rapid-grass…`) can be deleted.
 
 ## Tech stack + version gotchas
 - **Next.js 16** (App Router): `params`/`searchParams`/`cookies()` are async (await them). See repo `AGENTS.md` (warns it differs from training data; read `node_modules/next/dist/docs/` when unsure).
@@ -50,18 +62,24 @@ Event: **12 Temmuz 2026, Pazar**. 09:00–18:00 atölyeler & panayır; 18:00–0
 5. Tests: `npm test` → 33 pass; 7 DB-backed tests **skip** unless a Postgres test DB is reachable (see README "Testing" for `DATABASE_URL_TEST` + `festival_gate_test`).
 
 ## Git
-- Single repo, working on branch **`main`** (no remote yet). Everything committed. `.env` and `*.db` are gitignored.
+- Single repo on branch **`main`**, pushed to GitHub: `github.com/ImAnurath/festival-gate`. Vercel auto-deploys on every push to `main`. Everything committed. `.env` and `*.db` are gitignored (verified: only `.env.example` is tracked).
 
 ## Payment + email reality
 - **Payment is a STUB** (marks paid without charging). Real money needs **iyzico**: implement `IyzicoPaymentProvider` against `src/lib/payment/types.ts`, wire into `getPaymentProvider()`, HMAC-verify inside `verifyCallback`, set `PAYMENT_PROVIDER=iyzico`, point iyzico callback at `/api/payment/callback`, delete the dev stub `pay/[token]/confirm/route.ts`. (See README.)
 - **Email** is `NOTIFIER=console` (logs the pay link to the server console). The dashboard **copy-link** button means email isn't required to operate. For real auto-email: Resend account + verified domain, set `NOTIFIER=resend` + `RESEND_API_KEY` + `MAIL_FROM`.
 
 ## NEXT STEPS (in priority order)
-1. **Deploy** (current focus): push to GitHub → import on Vercel (free `*.vercel.app` URL; commissioner has no domain and doesn't need one) → add free hosted Postgres (Neon / Vercel Postgres) → set env vars on Vercel (`DATABASE_URL`, `SESSION_PASSWORD`, `NEXT_PUBLIC_APP_URL` = the vercel URL, `EVENT_NAME`, etc.) → `prisma migrate deploy` against the cloud DB → create admin there. Double-check no secrets are committed before pushing.
-2. **iyzico** real payments (needs commissioner's merchant account + legal homework below).
-3. **Auto-email** via Resend (optional; copy-link covers launch).
-4. **Public-form rate limiting** (spec §5; only honeypot exists now).
-5. Optional polish: higher-res / transparent **mountain** logo if commissioner provides one; custom favicon; post-event KVKK data deletion.
+Deploy is DONE (see Deployment section). The two big remaining features:
+
+1. **iyzico real payments** (the "money" part). Currently a STUB. Implement `IyzicoPaymentProvider` against `src/lib/payment/types.ts`, wire into `getPaymentProvider()` (`src/lib/payment/index.ts`), HMAC-verify inside `verifyCallback`, set `PAYMENT_PROVIDER=iyzico` on Vercel, point iyzico's callback at `/api/payment/callback`, and **delete the dev stub** `src/app/pay/[token]/confirm/route.ts`. Needs commissioner's merchant account + legal homework (below).
+2. **Auto-email via Resend** (the "email" part). Currently `NOTIFIER=console`. Implement against `src/lib/notify/` interface (console + resend already scaffolded). Needs a Resend account + verified sending domain, then set `NOTIFIER=resend` + `RESEND_API_KEY` + `MAIL_FROM` on Vercel. Until then, the admin dashboard's copy-link button covers operation.
+
+Smaller open items (not blocking, do before the real event):
+3. **Public-form rate limiting** (spec §5; only a honeypot exists now). Pure code, no external deps.
+4. **Clean the live DB before launch.** There are ~2 **test** Application rows and possibly a duplicate AdminUser (the admin INSERT may have run twice). Wipe test applications and confirm a single intended admin via Neon SQL Editor.
+5. **Security: rotate the shared secrets.** The Neon `DATABASE_URL` password and `SESSION_PASSWORD` were pasted into a chat transcript during setup. Rotate the Neon role password (Neon → Roles → reset) and regenerate `SESSION_PASSWORD`, then update both on Vercel. (Rotating `SESSION_PASSWORD` just logs admins out once.)
+6. **Delete leftover unused Neon databases** (`ep-long-water…`, `ep-rapid-grass…`) to avoid future confusion.
+7. Optional polish: higher-res / transparent **mountain** logo if commissioner provides one; custom favicon; post-event **KVKK** data deletion.
 
 ## Commissioner's legal homework (not code)
 Confirm entity can sell event tickets online (card-not-present, distinct from restaurant POS); open iyzico merchant account + KYC; e-Arşiv fatura + KDV. Their responsibility.
