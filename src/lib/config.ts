@@ -9,7 +9,7 @@ const schema = z.object({
   PAY_TOKEN_TTL_HOURS: intString,
   PAYMENT_PROVIDER: z.enum(["stub", "iyzico"]),
   NOTIFIER: z.enum(["console", "resend"]),
-  WHATSAPP_PROVIDER: z.enum(["console", "twilio"]).default("console"),
+  WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
 });
 
@@ -20,7 +20,7 @@ export type Config = {
   payTokenTtlHours: number;
   paymentProvider: "stub" | "iyzico";
   notifier: "console" | "resend";
-  whatsappProvider: "console" | "twilio";
+  whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
 };
 
