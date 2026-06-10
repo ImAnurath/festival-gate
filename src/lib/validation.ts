@@ -33,11 +33,31 @@ export function buildApplicationSchema(maxTickets: number) {
       guestNames: z
         .array(z.string().trim().min(1, "Misafir adı boş olamaz").max(80, "Misafir adı çok uzun"))
         .max(maxTickets - 1),
+      guestSocials: z
+        .array(
+          z
+            .string()
+            .trim()
+            .min(1, "Misafir Instagram hesabı gerekli")
+            .max(500, "Çok uzun")
+        )
+        .max(maxTickets - 1)
+        .default([]),
+      childCount: z.coerce
+        .number()
+        .int("Çocuk sayısı bir tam sayı olmalı")
+        .min(0, "Çocuk sayısı negatif olamaz")
+        .max(10, "En fazla 10 çocuk ekleyebilirsiniz")
+        .default(0),
       website: z.string().max(0, "Bu alan boş olmalı").optional().default(""),
     })
     .refine((d) => d.guestNames.length === d.ticketQuantity - 1, {
       message: "Misafir adı sayısı, bilet sayısından bir eksik olmalıdır",
       path: ["guestNames"],
+    })
+    .refine((d) => d.guestSocials.length === d.ticketQuantity - 1, {
+      message: "Her misafir için bir Instagram hesabı girin",
+      path: ["guestSocials"],
     });
 }
 
