@@ -13,6 +13,7 @@ export async function submitApplication(
 ): Promise<SubmitState> {
   const schema = buildApplicationSchema(config.maxTicketsPerBuyer);
   const guestNames = formData.getAll("guestNames").map(String).filter((s) => s.trim() !== "");
+  const guestSocials = formData.getAll("guestSocials").map(String).filter((s) => s.trim() !== "");
 
   const parsed = schema.safeParse({
     name: formData.get("name"),
@@ -21,6 +22,8 @@ export async function submitApplication(
     socialTags: formData.get("socialTags"),
     ticketQuantity: formData.get("ticketQuantity"),
     guestNames,
+    guestSocials,
+    childCount: formData.get("childCount") ?? "0",
     website: formData.get("website") ?? "",
   });
 
@@ -35,6 +38,8 @@ export async function submitApplication(
     socialTags: parsed.data.socialTags,
     ticketQuantity: parsed.data.ticketQuantity,
     guestNames: parsed.data.guestNames,
+    guestSocials: parsed.data.guestSocials,
+    childCount: parsed.data.childCount,
   });
 
   redirect("/?submitted=1");
