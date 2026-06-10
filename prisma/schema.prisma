@@ -22,6 +22,8 @@ model Application {
   socialTags        String
   ticketQuantity    Int
   guestNames        String   // JSON-encoded string[] (kept as text for simplicity)
+  guestSocials      String   @default("[]") // JSON-encoded string[] of guest Instagram handles, parallel to guestNames
+  childCount        Int      @default(0)     // children under 12 (free, not counted as tickets)
   status            Status   @default(PENDING)
   payToken          String?  @unique
   payTokenExpiresAt DateTime?
