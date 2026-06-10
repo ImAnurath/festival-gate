@@ -48,7 +48,7 @@ describe("application schema", () => {
   it("rejects when the honeypot is filled", () => {
     expect(() => schema.parse({ ...valid, website: "spam" })).toThrow();
   });
-  it("rejects when a guest is missing an Instagram handle", () => {
+  it("rejects when guestSocials count does not equal quantity - 1", () => {
     expect(() =>
       schema.parse({ ...valid, guestSocials: ["@ayse"] })
     ).toThrow();

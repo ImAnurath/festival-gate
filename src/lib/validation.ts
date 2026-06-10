@@ -39,7 +39,7 @@ export function buildApplicationSchema(maxTickets: number) {
             .string()
             .trim()
             .min(1, "Misafir Instagram hesabı gerekli")
-            .max(500, "Çok uzun")
+            .max(500, "Misafir Instagram hesabı çok uzun")
         )
         .max(maxTickets - 1)
         .default([]),
