@@ -10,6 +10,8 @@ export type CreateInput = {
   socialTags: string;
   ticketQuantity: number;
   guestNames: string[];
+  guestSocials: string[];
+  childCount: number;
 };
 
 export async function createApplication(input: CreateInput) {
@@ -21,6 +23,8 @@ export async function createApplication(input: CreateInput) {
       socialTags: input.socialTags,
       ticketQuantity: input.ticketQuantity,
       guestNames: JSON.stringify(input.guestNames),
+      guestSocials: JSON.stringify(input.guestSocials),
+      childCount: input.childCount,
     },
   });
 }
