@@ -77,17 +77,40 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
         </select>
       </div>
 
+      <div>
+        <label className={labelClass} htmlFor="childCount">
+          12 yaş altı çocuk sayısı
+        </label>
+        <select id="childCount" name="childCount" defaultValue={0} className="field">
+          {Array.from({ length: 11 }, (_, i) => i).map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-xs leading-relaxed text-moss/70">
+          12 yaş altı çocuklar ücretsizdir, bilet gerekmez.
+        </p>
+      </div>
+
       {guestCount > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className={labelClass}>Misafirler</p>
           {Array.from({ length: guestCount }, (_, i) => (
-            <input
-              key={i}
-              name="guestNames"
-              placeholder={`${i + 1}. misafirin adı`}
-              required
-              className="field"
-            />
+            <div key={i} className="space-y-2">
+              <input
+                name="guestNames"
+                placeholder={`${i + 1}. misafirin adı`}
+                required
+                className="field"
+              />
+              <input
+                name="guestSocials"
+                placeholder={`${i + 1}. misafirin Instagram'ı (@kullaniciadi)`}
+                required
+                className="field"
+              />
+            </div>
           ))}
         </div>
       )}

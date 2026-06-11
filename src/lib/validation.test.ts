@@ -8,6 +8,8 @@ const valid = {
   socialTags: "@ali_insta",
   ticketQuantity: 3,
   guestNames: ["Ayse", "Mehmet"],
+  guestSocials: ["@ayse", "@mehmet"],
+  childCount: 0,
   website: "",
 };
 
@@ -16,19 +18,28 @@ describe("application schema", () => {
     expect(schema.parse(valid)).toMatchObject({ ticketQuantity: 3 });
   });
   it("rejects when guest count does not equal quantity - 1", () => {
-    expect(() => schema.parse({ ...valid, guestNames: ["Ayse"] })).toThrow();
+    expect(() =>
+      schema.parse({ ...valid, guestNames: ["Ayse"], guestSocials: ["@ayse"] })
+    ).toThrow();
   });
   it("rejects quantity above the max", () => {
     expect(() =>
-      schema.parse({ ...valid, ticketQuantity: 7, guestNames: ["a", "b", "c", "d", "e", "f"] })
+      schema.parse({
+        ...valid,
+        ticketQuantity: 7,
+        guestNames: ["a", "b", "c", "d", "e", "f"],
+        guestSocials: ["@a", "@b", "@c", "@d", "@e", "@f"],
+      })
     ).toThrow();
   });
   it("rejects a quantity below 1", () => {
-    expect(() => schema.parse({ ...valid, ticketQuantity: 0, guestNames: [] })).toThrow();
+    expect(() =>
+      schema.parse({ ...valid, ticketQuantity: 0, guestNames: [], guestSocials: [] })
+    ).toThrow();
   });
   it("accepts a solo buyer with no guests", () => {
     expect(() =>
-      schema.parse({ ...valid, ticketQuantity: 1, guestNames: [] })
+      schema.parse({ ...valid, ticketQuantity: 1, guestNames: [], guestSocials: [] })
     ).not.toThrow();
   });
   it("rejects a bad email", () => {
@@ -36,6 +47,33 @@ describe("application schema", () => {
   });
   it("rejects when the honeypot is filled", () => {
     expect(() => schema.parse({ ...valid, website: "spam" })).toThrow();
+  });
+  it("rejects when guestSocials count does not equal quantity - 1", () => {
+    expect(() =>
+      schema.parse({ ...valid, guestSocials: ["@ayse"] })
+    ).toThrow();
+  });
+  it("rejects an empty guest Instagram handle", () => {
+    expect(() =>
+      schema.parse({ ...valid, guestSocials: ["@ayse", "  "] })
+    ).toThrow();
+  });
+  it("defaults childCount to 0 when omitted", () => {
+    const { childCount, ...noChild } = valid;
+    const r = schema.safeParse(noChild);
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.childCount).toBe(0);
+  });
+  it("accepts a childCount within range", () => {
+    const r = schema.safeParse({ ...valid, childCount: 4 });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.childCount).toBe(4);
+  });
+  it("rejects a childCount above 10", () => {
+    expect(() => schema.parse({ ...valid, childCount: 11 })).toThrow();
+  });
+  it("rejects a negative childCount", () => {
+    expect(() => schema.parse({ ...valid, childCount: -1 })).toThrow();
   });
 });
 
@@ -45,6 +83,8 @@ const base = {
   socialTags: "@ali",
   ticketQuantity: 1,
   guestNames: [],
+  guestSocials: [],
+  childCount: 0,
   website: "",
 };
 

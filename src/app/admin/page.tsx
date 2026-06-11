@@ -102,6 +102,7 @@ export default async function AdminPage({
               <th className="px-4 py-3 font-medium">Sosyal</th>
               <th className="px-4 py-3 font-medium">Adet</th>
               <th className="px-4 py-3 font-medium">Misafirler</th>
+              <th className="px-4 py-3 font-medium">Çocuk (&lt;12)</th>
               <th className="px-4 py-3 font-medium">Durum</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -109,7 +110,7 @@ export default async function AdminPage({
           <tbody>
             {apps.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-moss">
+                <td colSpan={8} className="px-4 py-10 text-center text-moss">
                   Henüz başvuru yok.
                 </td>
               </tr>
@@ -121,8 +122,16 @@ export default async function AdminPage({
                 <td className="px-4 py-3 text-moss">{a.socialTags}</td>
                 <td className="px-4 py-3 text-ink">{a.ticketQuantity}</td>
                 <td className="px-4 py-3 text-moss">
-                  {(JSON.parse(a.guestNames) as string[]).join(", ") || "-"}
+                  {(() => {
+                    const names = JSON.parse(a.guestNames) as string[];
+                    const socials = JSON.parse(a.guestSocials) as string[];
+                    if (names.length === 0) return "-";
+                    return names
+                      .map((n, i) => (socials[i] ? `${n} (${socials[i]})` : n))
+                      .join(", ");
+                  })()}
                 </td>
+                <td className="px-4 py-3 text-ink">{a.childCount}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[a.status]}`}

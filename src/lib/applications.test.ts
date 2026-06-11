@@ -35,6 +35,8 @@ const input = {
   socialTags: "@ali",
   ticketQuantity: 2,
   guestNames: ["Ayse"],
+  guestSocials: ["@ayse"],
+  childCount: 2,
 };
 
 suite("application use-cases", () => {
@@ -42,6 +44,8 @@ suite("application use-cases", () => {
     const a = await createApplication(input);
     expect(a.status).toBe("PENDING");
     expect(JSON.parse(a.guestNames)).toEqual(["Ayse"]);
+    expect(JSON.parse(a.guestSocials)).toEqual(["@ayse"]);
+    expect(a.childCount).toBe(2);
   });
 
   it("approve assigns a token and expiry", async () => {

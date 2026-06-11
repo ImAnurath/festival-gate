@@ -133,6 +133,9 @@ export default async function Home({
           <p className="mt-3 text-sm text-moss/80">
             Bilet ücreti: <span className="font-semibold text-ink">{config.ticketPrice} TL</span> (kişi başı)
           </p>
+          <p className="mt-2 text-sm text-moss/80">
+            12 yaş altı çocuklar <span className="font-semibold text-ink">ücretsizdir</span>.
+          </p>
 
           <div className="mt-8">
             <ApplyForm maxTickets={config.maxTicketsPerBuyer} />
