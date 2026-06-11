@@ -8,6 +8,9 @@ const schema = z.object({
   MAX_TICKETS_PER_BUYER: intString,
   PAY_TOKEN_TTL_HOURS: intString,
   PAYMENT_PROVIDER: z.enum(["stub", "iyzico"]),
+  IYZICO_API_KEY: z.string().optional(),
+  IYZICO_SECRET_KEY: z.string().optional(),
+  IYZICO_BASE_URL: z.string().default("https://sandbox-api.iyzipay.com"),
   NOTIFIER: z.enum(["console", "resend"]),
   WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
@@ -19,6 +22,9 @@ export type Config = {
   maxTicketsPerBuyer: number;
   payTokenTtlHours: number;
   paymentProvider: "stub" | "iyzico";
+  iyzicoApiKey: string;
+  iyzicoSecretKey: string;
+  iyzicoBaseUrl: string;
   notifier: "console" | "resend";
   whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
@@ -51,6 +57,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     maxTicketsPerBuyer: p.MAX_TICKETS_PER_BUYER,
     payTokenTtlHours: p.PAY_TOKEN_TTL_HOURS,
     paymentProvider: p.PAYMENT_PROVIDER,
+    iyzicoApiKey: p.IYZICO_API_KEY ?? "",
+    iyzicoSecretKey: p.IYZICO_SECRET_KEY ?? "",
+    iyzicoBaseUrl: p.IYZICO_BASE_URL,
     notifier: p.NOTIFIER,
     whatsappProvider: p.WHATSAPP_PROVIDER,
     appUrl: p.APP_URL,
