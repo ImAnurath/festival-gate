@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
-import { markPaidByToken } from "@/lib/applications";
+import { markPaidByToken, NotPayableError } from "@/lib/applications";
 import { isShowcaseToken } from "@/lib/payment/showcase";
 import { notify } from "@/lib/notify";
 import { buildConfirmationEmail } from "@/lib/notify/types";
@@ -48,10 +48,23 @@ export async function POST(req: NextRequest) {
       : NextResponse.json({ ok: false, note: "amount-mismatch" }, { status: 400 });
   }
 
+  let paid;
   try {
-    const paid = await markPaidByToken(result.payToken, result.ref, expected);
-    // Payment is recorded. The confirmation email is best-effort; a send failure
-    // must never undo or mask the paid result.
+    paid = await markPaidByToken(result.payToken, result.ref, expected);
+  } catch (err) {
+    if (err instanceof NotPayableError) {
+      // Already paid, expired, or unknown -> idempotent no-op.
+      return isBrowser
+        ? redirectTo(result.payToken)
+        : NextResponse.json({ ok: true, note: "no-op" });
+    }
+    // Genuine failure (e.g. database error): do NOT report success — let it surface.
+    throw err;
+  }
+
+  // Payment is recorded. The confirmation email is best-effort; a send failure
+  // must never undo or mask the paid result.
+  try {
     await notify(
       paid.email,
       buildConfirmationEmail({
@@ -61,7 +74,7 @@ export async function POST(req: NextRequest) {
       })
     );
   } catch {
-    // Not payable: already paid, expired, or unknown -> idempotent no-op.
+    // best-effort email; ignore failures.
   }
 
   return isBrowser ? redirectTo(result.payToken) : NextResponse.json({ ok: true });
