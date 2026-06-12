@@ -1,6 +1,7 @@
 import BrandLogo from "@/components/brand-logo";
 import PaymentLogos from "@/components/payment-logos";
 import { EVENT } from "@/lib/event";
+import { SHOWCASE_PAY_TOKEN } from "@/lib/payment/showcase";
 
 const legalLinks = [
   { href: "/hakkimizda", label: "Hakkımızda" },
@@ -47,6 +48,12 @@ export default function SiteFooter() {
           Başvuru bilgileriniz yalnızca etkinlik girişi için saklanır ve
           etkinlik sonrasında silinir.
         </p>
+        <a
+          href={`/pay/${SHOWCASE_PAY_TOKEN}`}
+          className="mt-4 text-xs text-moss/60 underline underline-offset-4 transition-colors hover:text-ink"
+        >
+          Ödeme adımını görüntüle
+        </a>
         <a
           href="/admin"
           className="mt-4 text-[0.7rem] uppercase tracking-[0.2em] text-moss/40 transition-colors hover:text-moss"
