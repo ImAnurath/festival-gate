@@ -3,6 +3,13 @@ import { config } from "./config";
 import { approve, reject } from "./state-machine";
 import { generatePayToken, expiryFromNow } from "./token";
 
+export class NotPayableError extends Error {
+  constructor() {
+    super("Application is not payable: unknown token, not approved, expired, or already paid");
+    this.name = "NotPayableError";
+  }
+}
+
 export type CreateInput = {
   name: string;
   email: string;
@@ -76,9 +83,7 @@ export async function markPaidByToken(payToken: string, paymentRef: string, amou
     data: { status: "PAID", paymentRef, amount, paidAt: now },
   });
   if (result.count === 0) {
-    throw new Error(
-      "Application is not payable: unknown token, not approved, expired, or already paid"
-    );
+    throw new NotPayableError();
   }
   return prisma.application.findUniqueOrThrow({ where: { payToken } });
 }

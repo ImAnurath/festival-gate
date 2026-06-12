@@ -9,6 +9,7 @@ describe("StubPaymentProvider", () => {
       applicationId: "app1",
       amount: 1500,
       email: "ali@example.com",
+      name: "Ali Veli",
       payToken: "TOKEN123",
     });
     expect(s.url).toBe("http://localhost:3000/pay/TOKEN123/confirm");

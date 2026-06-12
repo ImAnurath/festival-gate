@@ -15,6 +15,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "iron-session": "^8.0.4",
+    "iyzipay": "^2.0.67",
     "next": "16.2.7",
     "pg": "^8.21.0",
     "react": "19.2.4",

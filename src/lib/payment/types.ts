@@ -2,6 +2,7 @@ export type CheckoutInput = {
   applicationId: string;
   amount: number; // integer, in the smallest sensible unit (whole TRY here)
   email: string;
+  name: string;
   payToken: string;
 };
 
@@ -14,6 +15,7 @@ export type CallbackResult = {
   ok: boolean;
   payToken: string;
   ref: string;
+  paidAmount?: number; // amount the provider confirms was charged, in whole TRY
 };
 
 export interface PaymentProvider {

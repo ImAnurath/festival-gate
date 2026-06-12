@@ -72,6 +72,7 @@ export default async function PayPage({
     applicationId: app.id,
     amount,
     email: app.email,
+    name: app.name,
     payToken: token,
   });
 
