@@ -31,12 +31,37 @@ model Application {
   paymentRef        String?
   paidAt            DateTime?
   reviewNote        String?
+  ticketsAccessToken String?  @unique
+  tickets           Ticket[]
 }
 
 model AdminUser {
   id           String @id @default(cuid())
   email        String @unique
   passwordHash String
+}
+
+enum TicketStatus {
+  VALID
+  USED
+}
+
+// One row per attendee (buyer + each named guest). Created when an application
+// is paid. `verifyToken` is the opaque QR payload; `code` is a short, human
+// code for door staff. `status`/`checkedInAt` are set at check-in (later SP).
+model Ticket {
+  id            String       @id @default(cuid())
+  applicationId String
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  holderName    String
+  isBuyer       Boolean      @default(false)
+  code          String       @unique
+  verifyToken   String       @unique
+  status        TicketStatus @default(VALID)
+  checkedInAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  @@index([applicationId])
 }
 
 // One row per failed admin-login attempt, used to rate-limit brute force.
