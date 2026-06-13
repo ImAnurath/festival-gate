@@ -3,6 +3,7 @@ import { loadConfig } from "./config";
 
 describe("loadConfig", () => {
   const base = {
+    SESSION_PASSWORD: "test-password-test-password-test-1234",
     EVENT_NAME: "Test Fest",
     TICKET_PRICE: "500",
     MAX_TICKETS_PER_BUYER: "6",
@@ -26,5 +27,14 @@ describe("loadConfig", () => {
 
   it("rejects a non-numeric ticket price", () => {
     expect(() => loadConfig({ ...base, TICKET_PRICE: "free" })).toThrow();
+  });
+
+  it("rejects a SESSION_PASSWORD shorter than 32 characters", () => {
+    expect(() => loadConfig({ ...base, SESSION_PASSWORD: "too-short" })).toThrow();
+  });
+
+  it("rejects a missing SESSION_PASSWORD", () => {
+    const { SESSION_PASSWORD: _omit, ...withoutPassword } = base;
+    expect(() => loadConfig(withoutPassword)).toThrow();
   });
 });

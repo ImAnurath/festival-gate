@@ -38,3 +38,14 @@ model AdminUser {
   email        String @unique
   passwordHash String
 }
+
+// One row per failed admin-login attempt, used to rate-limit brute force.
+// `key` is the client identifier (e.g. "login:<ip>"). Rows older than the
+// rate-limit window are pruned opportunistically on each failure.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
