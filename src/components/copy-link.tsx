@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 /** Small button that copies a payment link to the clipboard (admin use). */
-export default function CopyLink({ url }: { url: string }) {
+export default function CopyLink({ url, label = "Bağlantıyı kopyala" }: { url: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -30,7 +30,7 @@ export default function CopyLink({ url }: { url: string }) {
       onClick={copy}
       className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-ink/5"
     >
-      {copied ? "Kopyalandı ✓" : "Bağlantıyı kopyala"}
+      {copied ? "Kopyalandı ✓" : label}
     </button>
   );
 }
