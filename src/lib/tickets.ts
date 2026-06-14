@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient, type Application, type Ticket } from "@prisma/client";
 import { generatePayToken, generateVerifyToken, generateTicketCode } from "./token";
+import { prisma } from "./prisma";
+import { config } from "./config";
 
 // Accept either the root client or a transaction handle, so issuance can run
 // inside the payment transaction or standalone (seed/backfill).
@@ -73,4 +75,29 @@ export async function issueTickets(db: Db, application: Application): Promise<Ti
   });
 
   return created;
+}
+
+export type TicketsView =
+  | { kind: "valid"; application: Application; tickets: Ticket[] }
+  | { kind: "expired" }
+  | { kind: "notfound" };
+
+/**
+ * Loads a paid application's tickets by its public ticketsAccessToken for the
+ * retrieval page / PDF route. `now` and `eventEnd` are injectable for testing;
+ * they default to the real clock and the configured event-end cutoff.
+ * After `eventEnd`, the link is considered expired regardless of token validity.
+ */
+export async function loadTicketsByAccessToken(
+  token: string,
+  now: Date = new Date(),
+  eventEnd: Date = config.eventEnd,
+): Promise<TicketsView> {
+  const application = await prisma.application.findUnique({
+    where: { ticketsAccessToken: token },
+    include: { tickets: { orderBy: { createdAt: "asc" } } },
+  });
+  if (!application) return { kind: "notfound" };
+  if (now >= eventEnd) return { kind: "expired" };
+  return { kind: "valid", application, tickets: application.tickets };
 }
