@@ -41,4 +41,18 @@ describe("renderTicketsPdf", () => {
     const pages = (buf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length;
     expect(pages).toBe(3);
   });
+
+  it("renders Turkish glyphs without throwing", async () => {
+    const buf = await renderTicketsPdf({ name: "Şükrü Çağlayan" }, [
+      ticket({ holderName: "Ayşe Yıldız Öztürk", code: "KF-TRX01", verifyToken: "tok-tr" }),
+    ]);
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
+  it("renders a very long holder name without throwing (auto-fit path)", async () => {
+    const buf = await renderTicketsPdf({ name: "Ali Veli" }, [
+      ticket({ holderName: "Konstantin Büyükşehiroğlu Çağlayangil", code: "KF-LONGX", verifyToken: "tok-long" }),
+    ]);
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
 });
