@@ -116,4 +116,13 @@ suite("markPaidByToken issues tickets", () => {
     await approveApplication(app.id);
     expect(await prisma.ticket.count({ where: { applicationId: app.id } })).toBe(0);
   });
+
+  it("markPaidByToken returns the application with its tickets and access token", async () => {
+    const app = await createApplication(input);
+    const approved = await approveApplication(app.id);
+    const paid = await markPaidByToken(approved.payToken!, "ref_123", 3 * 500);
+    // The returned object itself (no extra reload) must be delivery-ready.
+    expect(paid.ticketsAccessToken).toBeTruthy();
+    expect(paid.tickets).toHaveLength(1 + input.guestNames.length); // 1 buyer + 2 guests = 3
+  });
 });
