@@ -1,4 +1,10 @@
-export type EmailMessage = { to?: string; subject: string; text: string };
+export type EmailAttachment = { filename: string; content: Buffer };
+export type EmailMessage = {
+  to?: string;
+  subject: string;
+  text: string;
+  attachments?: EmailAttachment[];
+};
 
 export interface Notifier {
   send(to: string, message: EmailMessage): Promise<void>;
@@ -22,5 +28,16 @@ export function buildConfirmationEmail(p: { eventName: string; name: string; tic
   return {
     subject: `${p.eventName} biletleriniz onaylandı`,
     text: `Merhaba ${p.name},\n\nÖdemeniz alındı. ${p.eventName} için ${p.ticketQuantity} adet biletiniz bulunuyor.\nGirişte kimliğinizi yanınızda bulundurunuz.\n\nEtkinlikte görüşmek üzere!`,
+  };
+}
+
+export function buildTicketsEmail(p: { eventName: string; name: string; ticketsUrl: string }): EmailMessage {
+  return {
+    subject: `${p.eventName} biletleriniz hazır`,
+    text:
+      `Merhaba ${p.name},\n\n` +
+      `Ödemeniz alındı. ${p.eventName} biletleriniz bu e-postaya PDF olarak eklenmiştir.\n` +
+      `Biletlerinizi çevrimiçi görüntülemek veya yeniden indirmek için:\n${p.ticketsUrl}\n\n` +
+      `Girişte bu biletteki karekodu okutmanız yeterlidir. Etkinlikte görüşmek üzere!`,
   };
 }
