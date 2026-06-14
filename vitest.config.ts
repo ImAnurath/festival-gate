@@ -12,6 +12,11 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    // DB-backed test files (applications.test.ts, tickets.test.ts) share one
+    // Postgres database via resetDb(). Running files in parallel causes one
+    // file's resetDb() to truncate rows the other file just inserted, producing
+    // FK violations and record-not-found errors. Serial file execution fixes this.
+    fileParallelism: false,
     setupFiles: [],
     // config.ts validates these at import time; provide test defaults so any
     // module that imports config can be unit-tested without a real .env.
