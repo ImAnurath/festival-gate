@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
-import { createApplication } from "./applications";
+import { createApplication, approveApplication, markPaidByToken } from "./applications";
 import { attendeesFor, issueTickets } from "./tickets";
 
 // DB-backed; skip when no Postgres is reachable (same pattern as applications.test.ts).
@@ -81,5 +81,39 @@ suite("issueTickets", () => {
     const second = await issueTickets(prisma, reloaded);
     expect(second).toHaveLength(3);
     expect(await prisma.ticket.count({ where: { applicationId: app.id } })).toBe(3);
+  });
+});
+
+suite("markPaidByToken issues tickets", () => {
+  async function payNewApplication() {
+    const app = await createApplication(input);
+    const approved = await approveApplication(app.id);
+    await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
+    return prisma.application.findUniqueOrThrow({
+      where: { id: app.id },
+      include: { tickets: true },
+    });
+  }
+
+  it("creates tickets when an application is paid", async () => {
+    const paid = await payNewApplication();
+    expect(paid.status).toBe("PAID");
+    expect(paid.ticketsAccessToken).toBeTruthy();
+    expect(paid.tickets).toHaveLength(3);
+    expect(paid.tickets.map((t) => t.holderName)).toContain("Ali Veli");
+  });
+
+  it("does not duplicate tickets when the payment callback is replayed", async () => {
+    const paid = await payNewApplication();
+    const token = (await prisma.application.findUniqueOrThrow({ where: { id: paid.id } })).payToken!;
+    // Second call hits the already-PAID guard and throws (idempotent no-op upstream).
+    await expect(markPaidByToken(token, "ref-2", 3 * 500)).rejects.toThrow();
+    expect(await prisma.ticket.count({ where: { applicationId: paid.id } })).toBe(3);
+  });
+
+  it("leaves an unpaid application with no tickets", async () => {
+    const app = await createApplication(input);
+    await approveApplication(app.id);
+    expect(await prisma.ticket.count({ where: { applicationId: app.id } })).toBe(0);
   });
 });

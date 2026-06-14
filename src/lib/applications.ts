@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { config } from "./config";
 import { approve, reject } from "./state-machine";
 import { generatePayToken, expiryFromNow } from "./token";
+import { issueTickets } from "./tickets";
 
 export class NotPayableError extends Error {
   constructor() {
@@ -73,17 +74,21 @@ export async function reissuePayLink(id: string) {
 
 export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
   const now = new Date();
-  const result = await prisma.application.updateMany({
-    where: {
-      payToken,
-      status: "APPROVED",
-      paidAt: null,
-      payTokenExpiresAt: { gt: now },
-    },
-    data: { status: "PAID", paymentRef, amount, paidAt: now },
+  return prisma.$transaction(async (tx) => {
+    const result = await tx.application.updateMany({
+      where: {
+        payToken,
+        status: "APPROVED",
+        paidAt: null,
+        payTokenExpiresAt: { gt: now },
+      },
+      data: { status: "PAID", paymentRef, amount, paidAt: now },
+    });
+    if (result.count === 0) {
+      throw new NotPayableError();
+    }
+    const app = await tx.application.findUniqueOrThrow({ where: { payToken } });
+    await issueTickets(tx, app);
+    return app;
   });
-  if (result.count === 0) {
-    throw new NotPayableError();
-  }
-  return prisma.application.findUniqueOrThrow({ where: { payToken } });
 }
