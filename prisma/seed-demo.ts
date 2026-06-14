@@ -15,6 +15,7 @@ import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { generatePayToken, expiryFromNow } from "../src/lib/token";
+import { issueTickets } from "../src/lib/tickets";
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 
@@ -68,7 +69,7 @@ async function main() {
   });
 
   // 3) PAID — already completed, for display in the admin panel.
-  await prisma.application.create({
+  const paidDemo = await prisma.application.create({
     data: {
       name: "Demo Ödenmiş",
       email: DEMO_EMAILS[2],
@@ -85,6 +86,7 @@ async function main() {
       paidAt: new Date(),
     },
   });
+  await issueTickets(prisma, paidDemo);
 
   console.log("Demo applications seeded (3): PENDING, APPROVED, PAID.");
   console.log(`Approved applicant pay link: /pay/${approvedToken}`);
