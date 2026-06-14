@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
-import { createApplication, approveApplication, markPaidByToken } from "./applications";
+import { createApplication, approveApplication, markPaidByToken, NotPayableError } from "./applications";
 import { attendeesFor, issueTickets } from "./tickets";
 
 // DB-backed; skip when no Postgres is reachable (same pattern as applications.test.ts).
@@ -107,7 +107,7 @@ suite("markPaidByToken issues tickets", () => {
     const paid = await payNewApplication();
     const token = (await prisma.application.findUniqueOrThrow({ where: { id: paid.id } })).payToken!;
     // Second call hits the already-PAID guard and throws (idempotent no-op upstream).
-    await expect(markPaidByToken(token, "ref-2", 3 * 500)).rejects.toThrow();
+    await expect(markPaidByToken(token, "ref-2", 3 * 500)).rejects.toThrow(NotPayableError);
     expect(await prisma.ticket.count({ where: { applicationId: paid.id } })).toBe(3);
   });
 
