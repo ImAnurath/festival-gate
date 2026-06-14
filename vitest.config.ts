@@ -31,6 +31,7 @@ export default defineConfig({
       NOTIFIER: "console",
       WHATSAPP_PROVIDER: "console",
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+      EVENT_END: "2026-09-01T21:00:00.000Z",
     },
   },
 });

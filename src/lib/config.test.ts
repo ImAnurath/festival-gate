@@ -1,6 +1,31 @@
 import { describe, it, expect } from "vitest";
 import { loadConfig } from "./config";
 
+const base = {
+  SESSION_PASSWORD: "x".repeat(32),
+  EVENT_NAME: "KİNDZİ FEST",
+  TICKET_PRICE: "500",
+  MAX_TICKETS_PER_BUYER: "6",
+  PAY_TOKEN_TTL_HOURS: "48",
+  PAYMENT_PROVIDER: "stub",
+  NOTIFIER: "console",
+  NEXT_PUBLIC_APP_URL: "https://example.com",
+  EVENT_END: "2026-09-01T21:00:00.000Z",
+};
+
+describe("loadConfig EVENT_END", () => {
+  it("parses EVENT_END into a Date", () => {
+    const c = loadConfig(base);
+    expect(c.eventEnd).toBeInstanceOf(Date);
+    expect(c.eventEnd.toISOString()).toBe("2026-09-01T21:00:00.000Z");
+  });
+
+  it("throws when EVENT_END is missing", () => {
+    const { EVENT_END, ...without } = base;
+    expect(() => loadConfig(without)).toThrow();
+  });
+});
+
 describe("loadConfig", () => {
   const base = {
     SESSION_PASSWORD: "test-password-test-password-test-1234",
@@ -11,6 +36,7 @@ describe("loadConfig", () => {
     PAYMENT_PROVIDER: "stub",
     NOTIFIER: "console",
     NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+    EVENT_END: "2026-09-01T21:00:00.000Z",
   };
 
   it("parses numeric and enum fields", () => {
