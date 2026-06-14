@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import PDFDocument from "pdfkit";
+import QRCode from "qrcode";
 import type { Application, Ticket } from "@prisma/client";
 import { config } from "@/lib/config";
 
@@ -48,7 +49,7 @@ function fitFontSize(
   return minSize;
 }
 
-function drawTicketPage(doc: PDFKit.PDFDocument, ticket: Ticket): void {
+function drawTicketPage(doc: PDFKit.PDFDocument, ticket: Ticket, qrPng: Buffer): void {
   const panelW = PAGE_W - STUB_W;
 
   // Backgrounds: cream panel + slightly deeper stub.
@@ -109,12 +110,15 @@ function drawTicketPage(doc: PDFKit.PDFDocument, ticket: Ticket): void {
     .text(role, PAD + 8, PAGE_H - 22, { characterSpacing: 1, lineBreak: false });
   doc.restore();
 
-  // Stub: code + status (QR added in Task 5).
+  // Stub: QR + code + status.
+  const qrSize = 74;
+  doc.image(qrPng, panelW + (STUB_W - qrSize) / 2, 26, { width: qrSize, height: qrSize });
+
   doc
     .font("body-bold")
     .fontSize(13)
     .fillColor(C.hazel)
-    .text(ticket.code, panelW, 108, { width: STUB_W, align: "center", characterSpacing: 1 });
+    .text(ticket.code, panelW, 110, { width: STUB_W, align: "center", characterSpacing: 1 });
 
   doc.fillColor(C.sea).circle(panelW + STUB_W / 2 - 26, PAGE_H - 26, 2).fill();
   doc
@@ -148,9 +152,16 @@ export async function renderTicketsPdf(
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
+  // QR generation is async; do it up front, then draw synchronously.
+  const qrPngs = await Promise.all(
+    tickets.map((t) =>
+      QRCode.toBuffer(t.verifyToken, { errorCorrectionLevel: "M", margin: 0, width: 220 }),
+    ),
+  );
+
   tickets.forEach((ticket, i) => {
     if (i > 0) doc.addPage({ size: [PAGE_W, PAGE_H], margin: 0 });
-    drawTicketPage(doc, ticket);
+    drawTicketPage(doc, ticket, qrPngs[i]);
   });
 
   doc.end();

@@ -55,4 +55,12 @@ describe("renderTicketsPdf", () => {
     ]);
     expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
+
+  it("embeds a QR image on each ticket page", async () => {
+    const buf = await renderTicketsPdf({ name: "Ali Veli" }, [
+      ticket({ isBuyer: true, holderName: "Ali Veli", code: "KF-QR001", verifyToken: "tok-qr" }),
+    ]);
+    const text = buf.toString("latin1");
+    expect(text).toMatch(/\/Subtype\s*\/Image/);
+  });
 });
