@@ -9,7 +9,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="rise w-full max-w-md text-center">
-        <BrandLogo size={120} className="mx-auto mb-8" />
+        <BrandLogo size={120} priority className="mx-auto mb-8" />
         {children}
       </div>
     </main>
