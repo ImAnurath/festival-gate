@@ -4,6 +4,7 @@ import { getPaymentProvider } from "@/lib/payment";
 import { assertPayable } from "@/lib/state-machine";
 import Image from "next/image";
 import BrandLogo from "@/components/brand-logo";
+import TicketList from "@/components/ticket-list";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -22,7 +23,10 @@ export default async function PayPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const app = await prisma.application.findUnique({ where: { payToken: token } });
+  const app = await prisma.application.findUnique({
+    where: { payToken: token },
+    include: { tickets: { orderBy: { createdAt: "asc" } } },
+  });
 
   if (!app) {
     return (
@@ -40,12 +44,25 @@ export default async function PayPage({
   if (app.status === "PAID") {
     return (
       <Shell>
-        <h1 className="font-display text-3xl font-semibold text-ink">
-          Ödemeniz alındı
-        </h1>
+        <h1 className="font-display text-3xl font-semibold text-ink">Ödemeniz alındı</h1>
         <p className="mt-4 leading-relaxed text-moss">
-          {config.eventName} biletleriniz hazır. Girişte kimliğinizi yanınızda
-          bulundurun. Etkinlikte görüşmek üzere!
+          {config.eventName} biletleriniz hazır. Girişte her bilet için karekodu
+          okutmanız yeterlidir. Etkinlikte görüşmek üzere!
+        </p>
+
+        {app.tickets.length > 0 && <TicketList tickets={app.tickets} />}
+
+        {app.ticketsAccessToken && (
+          <a
+            href={`/tickets/${app.ticketsAccessToken}/pdf`}
+            className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
+          >
+            Biletleri İndir (PDF)
+          </a>
+        )}
+
+        <p className="mt-4 text-xs leading-relaxed text-moss/70">
+          Biletleriniz ayrıca e-posta ile gönderildi.
         </p>
       </Shell>
     );
