@@ -9,7 +9,7 @@ export async function GET(
   const view = await loadTicketsByAccessToken(token);
 
   if (view.kind === "notfound") {
-    return new Response("Not found", { status: 404 });
+    return new Response("Geçersiz bağlantı", { status: 404 });
   }
   if (view.kind === "expired") {
     return new Response("Etkinlik sona erdi", { status: 410 });

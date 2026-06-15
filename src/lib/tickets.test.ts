@@ -31,6 +31,16 @@ const input = {
   childCount: 2,
 };
 
+async function payNewApplication() {
+  const app = await createApplication(input);
+  const approved = await approveApplication(app.id);
+  await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
+  return prisma.application.findUniqueOrThrow({
+    where: { id: app.id },
+    include: { tickets: true },
+  });
+}
+
 describe("attendeesFor", () => {
   it("lists the buyer first, then each guest; children are excluded", () => {
     const attendees = attendeesFor({
@@ -85,16 +95,6 @@ suite("issueTickets", () => {
 });
 
 suite("markPaidByToken issues tickets", () => {
-  async function payNewApplication() {
-    const app = await createApplication(input);
-    const approved = await approveApplication(app.id);
-    await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
-    return prisma.application.findUniqueOrThrow({
-      where: { id: app.id },
-      include: { tickets: true },
-    });
-  }
-
   it("creates tickets when an application is paid", async () => {
     const paid = await payNewApplication();
     expect(paid.status).toBe("PAID");
@@ -131,16 +131,6 @@ suite("loadTicketsByAccessToken", () => {
   const before = new Date("2026-01-01T00:00:00.000Z");
   const after = new Date("2027-01-01T00:00:00.000Z");
   const eventEnd = new Date("2026-09-01T21:00:00.000Z");
-
-  async function payNewApplication() {
-    const app = await createApplication(input);
-    const approved = await approveApplication(app.id);
-    await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
-    return prisma.application.findUniqueOrThrow({
-      where: { id: app.id },
-      include: { tickets: true },
-    });
-  }
 
   it("returns a valid view with tickets before the event ends", async () => {
     const paid = await payNewApplication();

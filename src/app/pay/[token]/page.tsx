@@ -55,6 +55,7 @@ export default async function PayPage({
         {app.ticketsAccessToken && (
           <a
             href={`/tickets/${app.ticketsAccessToken}/pdf`}
+            download="kindzi-fest-biletleri.pdf"
             className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
           >
             Biletleri İndir (PDF)
