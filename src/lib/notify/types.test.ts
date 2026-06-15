@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { buildApprovalEmail, buildRejectionEmail, buildConfirmationEmail } from "./types";
+import {
+  buildApprovalEmail,
+  buildRejectionEmail,
+  buildConfirmationEmail,
+  buildTicketsEmail,
+} from "./types";
 
 describe("email builders", () => {
   it("approval email contains the payment link", () => {
@@ -20,5 +25,18 @@ describe("email builders", () => {
   it("rejection email is polite and has no link", () => {
     const m = buildRejectionEmail({ eventName: "Test Fest", name: "Ali" });
     expect(m.text).not.toContain("http");
+  });
+});
+
+describe("buildTicketsEmail", () => {
+  it("includes the event name in the subject", () => {
+    const m = buildTicketsEmail({ eventName: "KİNDZİ FEST", name: "Ayşe", ticketsUrl: "https://x/tickets/abc" });
+    expect(m.subject).toContain("KİNDZİ FEST");
+  });
+
+  it("includes the retrieval link in the body", () => {
+    const m = buildTicketsEmail({ eventName: "KİNDZİ FEST", name: "Ayşe", ticketsUrl: "https://x/tickets/abc" });
+    expect(m.text).toContain("https://x/tickets/abc");
+    expect(m.text).toContain("Ayşe");
   });
 });

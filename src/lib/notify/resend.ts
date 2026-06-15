@@ -15,6 +15,9 @@ export class ResendNotifier implements Notifier {
       to,
       subject: message.subject,
       text: message.text,
+      // Resend accepts { filename, content: Buffer }. Only set the field when
+      // present so non-attachment emails are unchanged.
+      ...(message.attachments?.length ? { attachments: message.attachments } : {}),
     });
     if (error) throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
   }
@@ -22,6 +25,9 @@ export class ResendNotifier implements Notifier {
 
 export class ConsoleNotifier implements Notifier {
   async send(to: string, message: EmailMessage): Promise<void> {
-    console.log(`[email] to=${to} subject="${message.subject}"\n${message.text}`);
+    const atts = message.attachments?.length
+      ? ` [attachments: ${message.attachments.map((a) => `${a.filename} (${a.content.length}b)`).join(", ")}]`
+      : "";
+    console.log(`[email] to=${to} subject="${message.subject}"${atts}\n${message.text}`);
   }
 }

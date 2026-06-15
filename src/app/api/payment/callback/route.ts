@@ -4,8 +4,7 @@ import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
 import { markPaidByToken, NotPayableError } from "@/lib/applications";
 import { isShowcaseToken } from "@/lib/payment/showcase";
-import { notify } from "@/lib/notify";
-import { buildConfirmationEmail } from "@/lib/notify/types";
+import { dispatchTickets } from "@/lib/notify/dispatch";
 
 // The callback serves two callers: the stub's /confirm route (JSON in, JSON out)
 // and iyzico's hosted page (form POST from the buyer's browser, expects a redirect).
@@ -62,19 +61,12 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  // Payment is recorded. The confirmation email is best-effort; a send failure
-  // must never undo or mask the paid result.
+  // Deliver the tickets (email with PDF + WhatsApp link). Best-effort: a send
+  // failure must never undo or mask the paid result.
   try {
-    await notify(
-      paid.email,
-      buildConfirmationEmail({
-        eventName: config.eventName,
-        name: paid.name,
-        ticketQuantity: paid.ticketQuantity,
-      })
-    );
+    await dispatchTickets(paid, paid.tickets);
   } catch {
-    // best-effort email; ignore failures.
+    // dispatchTickets is already best-effort internally; guard anyway.
   }
 
   return isBrowser ? redirectTo(result.payToken) : NextResponse.json({ ok: true });

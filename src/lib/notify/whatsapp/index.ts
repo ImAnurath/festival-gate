@@ -15,7 +15,9 @@ export function getWhatsAppSender(): WhatsAppSender {
         "WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_ACCESS_TOKEN and WHATSAPP_PAYLINK_TEMPLATE are required when WHATSAPP_PROVIDER=meta"
       );
     }
-    return new MetaWhatsAppSender(phoneNumberId, accessToken, template, lang);
+    const ticketsTemplate = process.env.WHATSAPP_TICKETS_TEMPLATE ?? "";
+    const ticketsLang = process.env.WHATSAPP_TICKETS_TEMPLATE_LANG ?? lang;
+    return new MetaWhatsAppSender(phoneNumberId, accessToken, template, lang, ticketsTemplate, ticketsLang);
   }
 
   if (config.whatsappProvider === "twilio") {
@@ -28,7 +30,8 @@ export function getWhatsAppSender(): WhatsAppSender {
         "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM and TWILIO_PAYLINK_CONTENT_SID are required when WHATSAPP_PROVIDER=twilio"
       );
     }
-    return new TwilioWhatsAppSender(accountSid, authToken, from, contentSid);
+    const ticketsContentSid = process.env.TWILIO_TICKETS_CONTENT_SID ?? "";
+    return new TwilioWhatsAppSender(accountSid, authToken, from, contentSid, ticketsContentSid);
   }
   return new ConsoleWhatsAppSender();
 }

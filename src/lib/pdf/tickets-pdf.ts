@@ -1,4 +1,3 @@
-import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
@@ -23,7 +22,14 @@ const C = {
   divider: "#b9ad90",
 } as const;
 
-const FONTS_DIR = fileURLToPath(new URL("./fonts/", import.meta.url));
+// Vendored fonts live at src/lib/pdf/fonts. Resolve them from the project root
+// (process.cwd()) — NOT via import.meta.url. Turbopack (the Next 16 production
+// bundler) can't resolve a directory URL and rewrites `new URL(..., import.meta.url)`
+// into a cross-realm URL object that breaks fileURLToPath during the build. Reading
+// from a cwd-relative path is the pattern Next's own docs use for bundled files;
+// next.config.ts's outputFileTracingIncludes copies these .ttf files into the server
+// trace for every route that renders a PDF, so the runtime read resolves.
+const FONTS_DIR = join(process.cwd(), "src", "lib", "pdf", "fonts");
 
 function registerFonts(doc: PDFKit.PDFDocument): void {
   doc.registerFont("display", join(FONTS_DIR, "Fraunces-Display.ttf"));

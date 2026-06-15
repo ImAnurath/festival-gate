@@ -17,6 +17,7 @@ const schema = z.object({
   NOTIFIER: z.enum(["console", "resend"]),
   WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
+  EVENT_END: z.iso.datetime({ message: "EVENT_END must be an ISO datetime, e.g. 2026-09-01T21:00:00Z" }),
 });
 
 export type Config = {
@@ -32,6 +33,7 @@ export type Config = {
   notifier: "console" | "resend";
   whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
+  eventEnd: Date;
 };
 
 // Resolve the public site URL. Prefer the explicit NEXT_PUBLIC_APP_URL, but fall
@@ -68,6 +70,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     notifier: p.NOTIFIER,
     whatsappProvider: p.WHATSAPP_PROVIDER,
     appUrl: p.APP_URL,
+    eventEnd: new Date(p.EVENT_END),
   };
 }
 

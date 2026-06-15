@@ -18,7 +18,7 @@ export default async function Home({
     return (
       <main className="flex flex-1 items-center justify-center px-6 py-24">
         <div className="rise max-w-xl text-center">
-          <BrandLogo size={150} className="mx-auto" />
+          <BrandLogo size={150} priority className="mx-auto" />
           <h1 className="mt-6 font-display text-5xl font-semibold tracking-tight text-ink">
             Başvurunuz alındı
           </h1>

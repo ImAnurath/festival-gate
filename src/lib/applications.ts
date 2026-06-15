@@ -89,6 +89,11 @@ export async function markPaidByToken(payToken: string, paymentRef: string, amou
     }
     const app = await tx.application.findUniqueOrThrow({ where: { payToken } });
     await issueTickets(tx, app);
-    return app;
+    // Reload after issuance so the returned object carries the freshly-stamped
+    // ticketsAccessToken and the issued tickets (SP3 delivery consumes both).
+    return tx.application.findUniqueOrThrow({
+      where: { payToken },
+      include: { tickets: true },
+    });
   });
 }

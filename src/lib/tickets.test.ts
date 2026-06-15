@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
 import { createApplication, approveApplication, markPaidByToken, NotPayableError } from "./applications";
-import { attendeesFor, issueTickets } from "./tickets";
+import { attendeesFor, issueTickets, loadTicketsByAccessToken } from "./tickets";
 
 // DB-backed; skip when no Postgres is reachable (same pattern as applications.test.ts).
 let dbReady = false;
@@ -30,6 +30,16 @@ const input = {
   guestSocials: ["@ayse", "@mehmet"],
   childCount: 2,
 };
+
+async function payNewApplication() {
+  const app = await createApplication(input);
+  const approved = await approveApplication(app.id);
+  await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
+  return prisma.application.findUniqueOrThrow({
+    where: { id: app.id },
+    include: { tickets: true },
+  });
+}
 
 describe("attendeesFor", () => {
   it("lists the buyer first, then each guest; children are excluded", () => {
@@ -85,16 +95,6 @@ suite("issueTickets", () => {
 });
 
 suite("markPaidByToken issues tickets", () => {
-  async function payNewApplication() {
-    const app = await createApplication(input);
-    const approved = await approveApplication(app.id);
-    await markPaidByToken(approved.payToken!, "ref-1", 3 * 500);
-    return prisma.application.findUniqueOrThrow({
-      where: { id: app.id },
-      include: { tickets: true },
-    });
-  }
-
   it("creates tickets when an application is paid", async () => {
     const paid = await payNewApplication();
     expect(paid.status).toBe("PAID");
@@ -115,5 +115,41 @@ suite("markPaidByToken issues tickets", () => {
     const app = await createApplication(input);
     await approveApplication(app.id);
     expect(await prisma.ticket.count({ where: { applicationId: app.id } })).toBe(0);
+  });
+
+  it("markPaidByToken returns the application with its tickets and access token", async () => {
+    const app = await createApplication(input);
+    const approved = await approveApplication(app.id);
+    const paid = await markPaidByToken(approved.payToken!, "ref_123", 3 * 500);
+    // The returned object itself (no extra reload) must be delivery-ready.
+    expect(paid.ticketsAccessToken).toBeTruthy();
+    expect(paid.tickets).toHaveLength(1 + input.guestNames.length); // 1 buyer + 2 guests = 3
+  });
+});
+
+suite("loadTicketsByAccessToken", () => {
+  const before = new Date("2026-01-01T00:00:00.000Z");
+  const after = new Date("2027-01-01T00:00:00.000Z");
+  const eventEnd = new Date("2026-09-01T21:00:00.000Z");
+
+  it("returns a valid view with tickets before the event ends", async () => {
+    const paid = await payNewApplication();
+    const view = await loadTicketsByAccessToken(paid.ticketsAccessToken!, before, eventEnd);
+    expect(view.kind).toBe("valid");
+    if (view.kind === "valid") {
+      expect(view.application.name).toBe(paid.name);
+      expect(view.tickets.length).toBe(paid.tickets.length);
+    }
+  });
+
+  it("returns expired after the event end", async () => {
+    const paid = await payNewApplication();
+    const view = await loadTicketsByAccessToken(paid.ticketsAccessToken!, after, eventEnd);
+    expect(view.kind).toBe("expired");
+  });
+
+  it("returns notfound for an unknown token", async () => {
+    const view = await loadTicketsByAccessToken("nope-not-a-token", before, eventEnd);
+    expect(view.kind).toBe("notfound");
   });
 });
