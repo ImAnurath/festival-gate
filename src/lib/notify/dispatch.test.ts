@@ -86,4 +86,13 @@ describe("dispatchTickets", () => {
     ).resolves.toBeUndefined();
     expect(notifyMock).toHaveBeenCalledTimes(1); // email still attempted
   });
+
+  it("skips delivery entirely when ticketsAccessToken is missing (no dead link)", async () => {
+    await expect(
+      dispatchTickets({ ...baseApp, phone: "+905551112233", ticketsAccessToken: null }, tickets),
+    ).resolves.toBeUndefined();
+    expect(renderMock).not.toHaveBeenCalled();
+    expect(notifyMock).not.toHaveBeenCalled();
+    expect(sendTicketsLinkMock).not.toHaveBeenCalled();
+  });
 });

@@ -40,6 +40,14 @@ export async function dispatchTickets(
   app: { name: string; email: string; phone: string | null; ticketsAccessToken: string | null },
   tickets: Ticket[]
 ): Promise<void> {
+  // Issuance always stamps ticketsAccessToken in the same transaction that marks
+  // the application paid, so this should never be null on the real path. Guard
+  // anyway: without it we'd email a dead ".../tickets/null" link. Fail loudly.
+  if (!app.ticketsAccessToken) {
+    console.error(`[dispatch] tickets delivery skipped: no ticketsAccessToken for ${app.email}`);
+    return;
+  }
+
   const ticketsUrl = `${config.appUrl}/tickets/${app.ticketsAccessToken}`;
 
   // Email (with PDF attachment). notify() is already best-effort internally.
