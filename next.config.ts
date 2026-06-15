@@ -29,11 +29,13 @@ const nextConfig: NextConfig = {
   // production bundler (Turbopack) cannot statically resolve. Keep it out of the
   // server bundle and let it run via native Node require at runtime.
   serverExternalPackages: ["iyzipay", "pdfkit"],
-  // The PDF route imports src/lib/pdf/tickets-pdf, which loads vendored TTFs via
-  // new URL("./fonts/", import.meta.url). Turbopack does not trace those binary
-  // assets automatically; include them so the built route can read them at runtime.
+  // Both the PDF download route and the payment callback render tickets via
+  // src/lib/pdf/tickets-pdf, which reads vendored TTFs from disk at runtime.
+  // Turbopack does not trace those binary assets automatically; include them so
+  // every route that renders a PDF can read them in the built/deployed app.
   outputFileTracingIncludes: {
     "/tickets/[token]/pdf": ["./src/lib/pdf/fonts/**/*.ttf"],
+    "/api/payment/callback": ["./src/lib/pdf/fonts/**/*.ttf"],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
