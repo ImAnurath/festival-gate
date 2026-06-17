@@ -1,8 +1,8 @@
-import type { WhatsAppSender, PayLinkVars } from "./types";
+import type { WhatsAppSender, PayLinkVars, TicketsLinkVars } from "./types";
 
-// Sends the approved pay-link template via Meta's WhatsApp Cloud API directly
-// (no BSP/Twilio in between). The template is referenced by name + language and
-// carries two body variables: {{1}} = buyer name, {{2}} = pay link.
+// Sends approved WhatsApp templates via Meta's WhatsApp Cloud API directly
+// (no BSP/Twilio in between). Templates carry two body variables:
+//   {{1}} = buyer name, {{2}} = pay link or tickets URL.
 //
 // A non-2xx response throws; the dispatch layer treats that as best-effort
 // (logs and continues, falling back to the admin copy-link button).
@@ -12,10 +12,18 @@ export class MetaWhatsAppSender implements WhatsAppSender {
     private accessToken: string,
     private templateName: string,
     private templateLang: string,
+    private ticketsTemplateName: string = "",
+    private ticketsTemplateLang: string = "tr",
     private graphVersion: string = "v21.0"
   ) {}
 
-  async sendPayLink(toPhone: string, vars: PayLinkVars): Promise<void> {
+  private async postTemplate(
+    toPhone: string,
+    name: string,
+    lang: string,
+    var1: string,
+    var2: string
+  ): Promise<void> {
     const url = `https://graph.facebook.com/${this.graphVersion}/${this.phoneNumberId}/messages`;
     const res = await fetch(url, {
       method: "POST",
@@ -29,14 +37,14 @@ export class MetaWhatsAppSender implements WhatsAppSender {
         to: toPhone.replace(/^\+/, ""),
         type: "template",
         template: {
-          name: this.templateName,
-          language: { code: this.templateLang },
+          name,
+          language: { code: lang },
           components: [
             {
               type: "body",
               parameters: [
-                { type: "text", text: vars.name },
-                { type: "text", text: vars.payUrl },
+                { type: "text", text: var1 },
+                { type: "text", text: var2 },
               ],
             },
           ],
@@ -48,5 +56,16 @@ export class MetaWhatsAppSender implements WhatsAppSender {
       const detail = await res.text().catch(() => "");
       throw new Error(`Meta WhatsApp send failed (${res.status}): ${detail}`);
     }
+  }
+
+  async sendPayLink(toPhone: string, vars: PayLinkVars): Promise<void> {
+    await this.postTemplate(toPhone, this.templateName, this.templateLang, vars.name, vars.payUrl);
+  }
+
+  async sendTicketsLink(toPhone: string, vars: TicketsLinkVars): Promise<void> {
+    if (!this.ticketsTemplateName) {
+      throw new Error("WHATSAPP_TICKETS_TEMPLATE is not configured");
+    }
+    await this.postTemplate(toPhone, this.ticketsTemplateName, this.ticketsTemplateLang, vars.name, vars.ticketsUrl);
   }
 }

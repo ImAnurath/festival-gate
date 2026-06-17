@@ -9,7 +9,7 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="w-full max-w-sm">
-        <BrandLogo size={96} className="mb-5" />
+        <BrandLogo size={96} priority className="mb-5" />
         <p className="text-xs uppercase tracking-[0.28em] text-moss">
           KİNDZİ FEST
         </p>

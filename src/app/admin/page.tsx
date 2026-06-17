@@ -167,6 +167,14 @@ export default async function AdminPage({
                       </form>
                     </div>
                   )}
+                  {a.status === "PAID" && a.ticketsAccessToken && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CopyLink
+                        url={`${config.appUrl}/tickets/${a.ticketsAccessToken}`}
+                        label="Bilet bağlantısını kopyala"
+                      />
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

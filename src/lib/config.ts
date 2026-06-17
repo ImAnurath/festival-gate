@@ -3,6 +3,9 @@ import { z } from "zod";
 const intString = z.string().regex(/^\d+$/, "must be an integer").transform(Number);
 
 const schema = z.object({
+  SESSION_PASSWORD: z
+    .string()
+    .min(32, "SESSION_PASSWORD must be at least 32 characters (iron-session requirement)"),
   EVENT_NAME: z.string().min(1),
   TICKET_PRICE: intString,
   MAX_TICKETS_PER_BUYER: intString,
@@ -14,9 +17,11 @@ const schema = z.object({
   NOTIFIER: z.enum(["console", "resend"]),
   WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
+  EVENT_END: z.iso.datetime({ message: "EVENT_END must be an ISO datetime, e.g. 2026-09-01T21:00:00Z" }),
 });
 
 export type Config = {
+  sessionPassword: string;
   eventName: string;
   ticketPrice: number;
   maxTicketsPerBuyer: number;
@@ -28,6 +33,7 @@ export type Config = {
   notifier: "console" | "resend";
   whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
+  eventEnd: Date;
 };
 
 // Resolve the public site URL. Prefer the explicit NEXT_PUBLIC_APP_URL, but fall
@@ -52,6 +58,7 @@ function resolveAppUrl(env: Record<string, string | undefined>): string | undefi
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
   const p = schema.parse({ ...env, APP_URL: resolveAppUrl(env) });
   return {
+    sessionPassword: p.SESSION_PASSWORD,
     eventName: p.EVENT_NAME,
     ticketPrice: p.TICKET_PRICE,
     maxTicketsPerBuyer: p.MAX_TICKETS_PER_BUYER,
@@ -63,6 +70,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     notifier: p.NOTIFIER,
     whatsappProvider: p.WHATSAPP_PROVIDER,
     appUrl: p.APP_URL,
+    eventEnd: new Date(p.EVENT_END),
   };
 }
 

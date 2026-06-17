@@ -1,12 +1,17 @@
 import { getIronSession, type SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { config } from "@/lib/config";
 
 export type AdminSession = { adminId?: string };
 
 const options: SessionOptions = {
-  password: process.env.SESSION_PASSWORD as string,
+  password: config.sessionPassword,
   cookieName: "festival_admin",
-  cookieOptions: { secure: process.env.NODE_ENV === "production" },
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  },
 };
 
 export async function getSession() {
