@@ -101,3 +101,37 @@ export async function loadTicketsByAccessToken(
   if (now >= eventEnd) return { kind: "expired" };
   return { kind: "valid", application, tickets: application.tickets };
 }
+
+export type CheckInResult =
+  | { result: "valid"; holderName: string; code: string; checkedInAt: Date }
+  | { result: "used"; holderName: string; code: string; checkedInAt: Date }
+  | { result: "invalid" };
+
+/**
+ * Checks a ticket in by its verifyToken OR its human code, single-use.
+ * The guarded updateMany (status VALID -> USED) is the single-use boundary:
+ * under concurrency exactly one caller flips the row (count === 1); any other
+ * caller sees count === 0 and reports the existing USED state with its original
+ * checkedInAt. `now` is injectable for tests.
+ */
+export async function checkInTicket(
+  identifier: string,
+  now: Date = new Date(),
+): Promise<CheckInResult> {
+  const match = { OR: [{ verifyToken: identifier }, { code: identifier }] };
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.ticket.updateMany({
+      where: { ...match, status: "VALID" },
+      data: { status: "USED", checkedInAt: now },
+    });
+    if (updated.count === 1) {
+      const t = await tx.ticket.findFirstOrThrow({ where: match });
+      return { result: "valid", holderName: t.holderName, code: t.code, checkedInAt: t.checkedInAt! };
+    }
+    const existing = await tx.ticket.findFirst({ where: match });
+    if (existing && existing.status === "USED") {
+      return { result: "used", holderName: existing.holderName, code: existing.code, checkedInAt: existing.checkedInAt! };
+    }
+    return { result: "invalid" };
+  });
+}

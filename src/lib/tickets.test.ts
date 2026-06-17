@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
 import { createApplication, approveApplication, markPaidByToken, NotPayableError } from "./applications";
-import { attendeesFor, issueTickets, loadTicketsByAccessToken } from "./tickets";
+import { attendeesFor, issueTickets, loadTicketsByAccessToken, checkInTicket } from "./tickets";
 
 // DB-backed; skip when no Postgres is reachable (same pattern as applications.test.ts).
 let dbReady = false;
@@ -151,5 +151,68 @@ suite("loadTicketsByAccessToken", () => {
   it("returns notfound for an unknown token", async () => {
     const view = await loadTicketsByAccessToken("nope-not-a-token", before, eventEnd);
     expect(view.kind).toBe("notfound");
+  });
+});
+
+suite("checkInTicket", () => {
+  it("checks in a VALID ticket by verifyToken -> valid, flips to USED, stamps checkedInAt", async () => {
+    const paid = await payNewApplication();
+    const ticket = paid.tickets[0];
+    const at = new Date("2026-09-01T18:00:00.000Z");
+
+    const res = await checkInTicket(ticket.verifyToken, at);
+
+    expect(res.result).toBe("valid");
+    if (res.result === "valid") {
+      expect(res.holderName).toBe(ticket.holderName);
+      expect(res.code).toBe(ticket.code);
+      expect(res.checkedInAt.toISOString()).toBe(at.toISOString());
+    }
+    const row = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+    expect(row.status).toBe("USED");
+    expect(row.checkedInAt?.toISOString()).toBe(at.toISOString());
+  });
+
+  it("checks in by human code as well as verifyToken", async () => {
+    const paid = await payNewApplication();
+    const ticket = paid.tickets[1];
+    const res = await checkInTicket(ticket.code);
+    expect(res.result).toBe("valid");
+  });
+
+  it("a second scan returns used and keeps the ORIGINAL checkedInAt", async () => {
+    const paid = await payNewApplication();
+    const ticket = paid.tickets[0];
+    const first = new Date("2026-09-01T18:00:00.000Z");
+    const later = new Date("2026-09-01T19:30:00.000Z");
+
+    await checkInTicket(ticket.verifyToken, first);
+    const res = await checkInTicket(ticket.verifyToken, later);
+
+    expect(res.result).toBe("used");
+    if (res.result === "used") {
+      expect(res.holderName).toBe(ticket.holderName);
+      expect(res.checkedInAt.toISOString()).toBe(first.toISOString()); // not overwritten
+    }
+  });
+
+  it("returns invalid for an unknown identifier", async () => {
+    const res = await checkInTicket("not-a-real-token");
+    expect(res.result).toBe("invalid");
+  });
+
+  it("two concurrent check-ins of the same ticket -> exactly one valid, one used", async () => {
+    const paid = await payNewApplication();
+    const ticket = paid.tickets[0];
+
+    const [a, b] = await Promise.all([
+      checkInTicket(ticket.verifyToken),
+      checkInTicket(ticket.verifyToken),
+    ]);
+
+    const results = [a.result, b.result].sort();
+    expect(results).toEqual(["used", "valid"]);
+    const row = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
+    expect(row.status).toBe("USED");
   });
 });
