@@ -68,6 +68,12 @@ export default async function AdminPage({
           >
             Ödeyen katılımcıları indir (CSV)
           </a>
+          <a
+            href="/admin/scan"
+            className="rounded-sm border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:bg-ink hover:text-cream"
+          >
+            Kapı tarama
+          </a>
         </div>
       </div>
 
