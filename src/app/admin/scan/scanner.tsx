@@ -101,10 +101,12 @@ export default function Scanner() {
     e.preventDefault();
     const v = manualValue.trim();
     if (!v) return;
+    if (busyRef.current) return; // debounce: ignore duplicate submits while a result is shown
+    busyRef.current = true;
     setManualValue("");
     void verify(v);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setResult(null), RESULT_MS);
+    timerRef.current = setTimeout(dismiss, RESULT_MS);
   }
 
   const bg =

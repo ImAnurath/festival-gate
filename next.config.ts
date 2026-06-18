@@ -54,6 +54,10 @@ const nextConfig: NextConfig = {
     // exactly one rule (no duplicate Permissions-Policy header).
     return [
       { source: "/admin/scan/:path*", headers: headersWithCamera("(self)") },
+      // The negative-lookahead below is a prefix match: any route whose path
+      // starts with "admin/scan" is excluded from this global rule. A future
+      // sibling such as /admin/scanner would also be excluded and would need
+      // its own rule with the correct camera policy if ever added.
       { source: "/((?!admin/scan).*)", headers: headersWithCamera("()") },
     ];
   },
