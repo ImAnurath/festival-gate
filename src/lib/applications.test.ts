@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
+import { config } from "@/lib/config";
 import {
   createApplication,
   approveApplication,
   rejectApplication,
   markPaidByToken,
+  markPaidAtDoor,
+  undoDoorPayment,
 } from "./applications";
 
 // These use-case tests need a real Postgres database. If none is reachable
@@ -92,5 +95,56 @@ suite("application use-cases", () => {
     const a = await createApplication(input);
     const r = await rejectApplication(a.id);
     expect(r.status).toBe("REJECTED");
+  });
+});
+
+suite("door payments", () => {
+  it("markPaidAtDoor marks an APPROVED application PAID with no tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const paid = await markPaidAtDoor(approved.id);
+
+    expect(paid.status).toBe("PAID");
+    expect(paid.paymentRef).toBe("door-pos");
+    expect(paid.amount).toBe(input.ticketQuantity * config.ticketPrice);
+    expect(paid.paidAt).toBeInstanceOf(Date);
+
+    const tickets = await prisma.ticket.findMany({ where: { applicationId: a.id } });
+    expect(tickets).toHaveLength(0);
+  });
+
+  it("markPaidAtDoor refuses a second mark (already paid)", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidAtDoor(approved.id);
+    await expect(markPaidAtDoor(approved.id)).rejects.toThrow();
+  });
+
+  it("markPaidAtDoor refuses a non-APPROVED application", async () => {
+    const a = await createApplication(input); // still PENDING
+    await expect(markPaidAtDoor(a.id)).rejects.toThrow();
+  });
+
+  it("undoDoorPayment reverts a door-paid application to APPROVED", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidAtDoor(approved.id);
+    const reverted = await undoDoorPayment(approved.id);
+
+    expect(reverted.status).toBe("APPROVED");
+    expect(reverted.paidAt).toBeNull();
+    expect(reverted.amount).toBeNull();
+    expect(reverted.paymentRef).toBeNull();
+  });
+
+  it("undoDoorPayment refuses an online-paid application with tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidByToken(approved.payToken!, "stub_ref", 1000); // issues tickets
+    await expect(undoDoorPayment(approved.id)).rejects.toThrow();
+
+    const still = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+    expect(still.status).toBe("PAID");
+    expect(still.paymentRef).toBe("stub_ref");
   });
 });

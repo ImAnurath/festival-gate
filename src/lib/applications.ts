@@ -72,6 +72,44 @@ export async function reissuePayLink(id: string) {
   });
 }
 
+// Mark an APPROVED application paid at the gate (organizer's bank POS terminal).
+// Unlike markPaidByToken, this issues NO tickets and sends NO notifications: the
+// guest is physically at the door. The amount is derived server-side and the
+// paymentRef marker flags it as a door payment for reconciliation. The guarded
+// updateMany (status APPROVED, paidAt null) makes a repeat tap a no-op rather
+// than a double mark.
+export async function markPaidAtDoor(id: string, now: Date = new Date()) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    const amount = app.ticketQuantity * config.ticketPrice;
+    const result = await tx.application.updateMany({
+      where: { id, status: "APPROVED", paidAt: null },
+      data: { status: "PAID", amount, paymentRef: "door-pos", paidAt: now },
+    });
+    if (result.count === 0) throw new NotPayableError();
+    return tx.application.findUniqueOrThrow({ where: { id } });
+  });
+}
+
+// Revert a mistaken door mark back to APPROVED. Guarded to door-paid
+// applications with zero tickets so it can never undo an online payment (which
+// always issues tickets). The ticket-count check inside the transaction avoids
+// relying on a to-many relation filter in updateMany.where.
+export async function undoDoorPayment(id: string) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    const ticketCount = await tx.ticket.count({ where: { applicationId: id } });
+    if (app.status !== "PAID" || app.paymentRef !== "door-pos" || ticketCount > 0) {
+      throw new NotPayableError();
+    }
+    await tx.application.update({
+      where: { id },
+      data: { status: "APPROVED", paidAt: null, amount: null, paymentRef: null },
+    });
+    return tx.application.findUniqueOrThrow({ where: { id } });
+  });
+}
+
 export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
   const now = new Date();
   return prisma.$transaction(async (tx) => {
