@@ -14,6 +14,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "html5-qrcode": "^2.3.8",
     "iron-session": "^8.0.4",
     "iyzipay": "^2.0.67",
     "next": "16.2.7",
