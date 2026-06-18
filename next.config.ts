@@ -6,7 +6,11 @@ import type { NextConfig } from "next";
 // redirect: `frame-ancestors` (clickjacking), `base-uri`, and `object-src`.
 // A stricter nonce-based script/style policy would need a proxy and is a
 // separate, riskier change.
-const securityHeaders = [
+//
+// Security headers applied to every response. Permissions-Policy is built per
+// route so the camera can be enabled ONLY on the /admin/scan subtree (the live
+// door scanner) while staying disabled everywhere else. See headers() below.
+const baseHeaders = [
   {
     key: "Strict-Transport-Security",
     value: "max-age=31536000; includeSubDomains",
@@ -15,14 +19,20 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
-    key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
-  },
-  {
     key: "Content-Security-Policy",
     value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
   },
 ];
+
+function headersWithCamera(camera: string) {
+  return [
+    ...baseHeaders,
+    {
+      key: "Permissions-Policy",
+      value: `camera=${camera}, microphone=(), geolocation=(), browsing-topics=()`,
+    },
+  ];
+}
 
 const nextConfig: NextConfig = {
   // The iyzipay SDK loads its resource files with a dynamic require() that the
@@ -38,7 +48,14 @@ const nextConfig: NextConfig = {
     "/api/payment/callback": ["./src/lib/pdf/fonts/**/*.ttf"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // The /admin/scan subtree (scanner page + its verify endpoint) is allowed to
+    // use the camera; every other route keeps it disabled. The negative-lookahead
+    // source excludes the scan subtree from the global rule so each route matches
+    // exactly one rule (no duplicate Permissions-Policy header).
+    return [
+      { source: "/admin/scan/:path*", headers: headersWithCamera("(self)") },
+      { source: "/((?!admin/scan).*)", headers: headersWithCamera("()") },
+    ];
   },
 };
 
