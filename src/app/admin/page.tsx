@@ -63,7 +63,7 @@ export default async function AdminPage({
             Siteyi görüntüle
           </a>
           <a
-            href="/admin/door"
+            href="/admin/door/export"
             className="rounded-sm border border-ink/20 px-4 py-2 text-sm text-ink transition-colors hover:bg-ink hover:text-cream"
           >
             Ödeyen katılımcıları indir (CSV)
