@@ -2,6 +2,15 @@ import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+// Run via `tsx` outside Next, so .env is not auto-loaded. Load it the same way
+// prisma.config.ts does. In production the platform sets env vars directly and
+// there is no .env file, hence the try/catch.
+try {
+  process.loadEnvFile();
+} catch {
+  // no .env file; rely on real environment variables (e.g. $env:DATABASE_URL)
+}
+
 async function main() {
   const [email, password] = process.argv.slice(2);
 
