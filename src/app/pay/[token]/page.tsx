@@ -2,9 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
 import { assertPayable } from "@/lib/state-machine";
+import { isShowcaseToken } from "@/lib/payment/showcase";
 import Image from "next/image";
 import BrandLogo from "@/components/brand-logo";
 import TicketList from "@/components/ticket-list";
+import ShowcaseDemo from "@/components/showcase-demo";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -19,10 +21,20 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 export default async function PayPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ step?: string | string[] }>;
 }) {
   const { token } = await params;
+
+  // The reviewer's public demo is fully in-code (no DB row): render the
+  // self-contained payment walkthrough and never touch prisma.
+  if (isShowcaseToken(token)) {
+    const { step } = await searchParams;
+    return <ShowcaseDemo step={Array.isArray(step) ? step[0] : step} />;
+  }
+
   const app = await prisma.application.findUnique({
     where: { payToken: token },
     include: { tickets: { orderBy: { createdAt: "asc" } } },
