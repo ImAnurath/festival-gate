@@ -105,15 +105,25 @@ function drawTicketPage(doc: PDFKit.PDFDocument, ticket: Ticket, qrPng: Buffer):
     .fillColor(C.ink)
     .text(ticket.holderName, PAD, PAGE_H - 62, { width: panelW - PAD * 2, height: 34 });
 
-  // Role pill (Sahibi / Misafir).
+  // Role pill (Sahibi / Misafir). Center the label inside the pill on both
+  // axes instead of hardcoding offsets, so it stays centered regardless of the
+  // string (Turkish dotted-capital glyphs shift the visual weight otherwise).
   const role = ticket.isBuyer ? "SAHİBİ" : "MİSAFİR";
   doc.font("body").fontSize(8);
+  const pillH = 14;
+  const pillY = PAGE_H - 26;
   const pillW = doc.widthOfString(role, { characterSpacing: 1 }) + 16;
+  const roleH = doc.heightOfString(role, { width: pillW, characterSpacing: 1, lineBreak: false });
   doc.save();
-  doc.roundedRect(PAD, PAGE_H - 26, pillW, 14, 7).lineWidth(0.8).strokeColor(C.sea).stroke();
+  doc.roundedRect(PAD, pillY, pillW, pillH, 7).lineWidth(0.8).strokeColor(C.sea).stroke();
   doc
     .fillColor(C.sea)
-    .text(role, PAD + 8, PAGE_H - 22, { characterSpacing: 1, lineBreak: false });
+    .text(role, PAD, pillY + (pillH - roleH) / 2, {
+      width: pillW,
+      align: "center",
+      characterSpacing: 1,
+      lineBreak: false,
+    });
   doc.restore();
 
   // Stub: QR + code + status.
