@@ -2,7 +2,7 @@ import { prisma } from "./prisma";
 import { config } from "./config";
 import { approve, reject } from "./state-machine";
 import { generatePayToken, expiryFromNow } from "./token";
-import { issueTickets } from "./tickets";
+import { issueTickets, checkInTicket, type CheckInResult } from "./tickets";
 
 export class NotPayableError extends Error {
   constructor() {
@@ -108,6 +108,24 @@ export async function undoDoorPayment(id: string) {
     });
     return tx.application.findUniqueOrThrow({ where: { id } });
   });
+}
+
+// Door collection driven by the scanner: mark the whole application paid at the
+// gate, then check the scanned ticket in. The other group members' tickets stay
+// VALID and scan straight through (their application is now PAID). If the app is
+// already paid (concurrent collect, or paid online), swallow NotPayableError and
+// still check the ticket in.
+export async function collectAtDoorAndCheckIn(
+  applicationId: string,
+  identifier: string,
+  now: Date = new Date(),
+): Promise<CheckInResult> {
+  try {
+    await markPaidAtDoor(applicationId, now);
+  } catch (err) {
+    if (!(err instanceof NotPayableError)) throw err;
+  }
+  return checkInTicket(identifier, now);
 }
 
 export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
