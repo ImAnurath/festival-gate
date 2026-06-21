@@ -149,6 +149,21 @@ suite("door payments", () => {
     expect(still.status).toBe("PAID");
     expect(still.paymentRef).toBe("stub_ref");
   });
+
+  it("undoDoorPayment reverts a door-pass payment and resets its checked-in tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const tickets = await issueTickets(prisma, approved); // door pass, status APPROVED
+    await collectAtDoorAndCheckIn(approved.id, tickets[0].verifyToken); // PAID + ticket USED
+
+    const reverted = await undoDoorPayment(approved.id);
+    expect(reverted.status).toBe("APPROVED");
+    expect(reverted.paymentRef).toBeNull();
+
+    const t0 = await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } });
+    expect(t0.status).toBe("VALID"); // reset
+    expect(t0.checkedInAt).toBeNull();
+  });
 });
 
 suite("collectAtDoorAndCheckIn", () => {

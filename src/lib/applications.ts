@@ -91,17 +91,24 @@ export async function markPaidAtDoor(id: string, now: Date = new Date()) {
   });
 }
 
-// Revert a mistaken door mark back to APPROVED. Guarded to door-paid
-// applications with zero tickets so it can never undo an online payment (which
-// always issues tickets). The ticket-count check inside the transaction avoids
-// relying on a to-many relation filter in updateMany.where.
+// Revert a mistaken door mark back to APPROVED. Gated on the door-pos marker,
+// not ticket count: door-pass guests have tickets while unpaid, so ticket count
+// no longer distinguishes door from online. Online payments carry a different
+// paymentRef and stay un-undoable.
 export async function undoDoorPayment(id: string) {
   return prisma.$transaction(async (tx) => {
     const app = await tx.application.findUniqueOrThrow({ where: { id } });
-    const ticketCount = await tx.ticket.count({ where: { applicationId: id } });
-    if (app.status !== "PAID" || app.paymentRef !== "door-pos" || ticketCount > 0) {
+    // Gate on the door-pos marker, not ticket count: door-pass guests have
+    // tickets while unpaid, so ticket count no longer distinguishes door from
+    // online. Online payments carry a different paymentRef and stay un-undoable.
+    if (app.status !== "PAID" || app.paymentRef !== "door-pos") {
       throw new NotPayableError();
     }
+    // Reset any tickets checked in during the door collection back to VALID.
+    await tx.ticket.updateMany({
+      where: { applicationId: id, status: "USED" },
+      data: { status: "VALID", checkedInAt: null },
+    });
     await tx.application.update({
       where: { id },
       data: { status: "APPROVED", paidAt: null, amount: null, paymentRef: null },
