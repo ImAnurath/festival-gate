@@ -106,6 +106,54 @@ export default async function PayPage({
     payToken: token,
   });
 
+  // status is APPROVED here (PAID handled above). A stamped ticketsAccessToken
+  // means the guest already chose "Kapıda öde" and holds a QR pass.
+  const hasDoorPass = app.ticketsAccessToken != null;
+
+  if (hasDoorPass) {
+    return (
+      <Shell>
+        <p className="text-xs uppercase tracking-[0.28em] text-moss">
+          {config.eventName}
+        </p>
+        <h1 className="mt-4 font-display text-3xl font-semibold text-ink">
+          Biletleriniz hazır
+        </h1>
+
+        <div className="mt-6 rounded-sm border border-hazel/30 bg-mist p-5">
+          <p className="leading-relaxed text-moss">
+            Girişte her bilet için karekodu okutun. Ödemeyi ({amount} TL) kapıda
+            alacağız.
+          </p>
+        </div>
+
+        {app.tickets.length > 0 && <TicketList tickets={app.tickets} />}
+
+        {app.ticketsAccessToken && (
+          <a
+            href={`/tickets/${app.ticketsAccessToken}/pdf`}
+            download="kindzi-fest-biletleri.pdf"
+            className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
+          >
+            Biletleri İndir (PDF)
+          </a>
+        )}
+
+        <a
+          href={session.url}
+          className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+        >
+          Şimdi öde
+        </a>
+
+        <p className="mt-4 text-xs leading-relaxed text-moss/70">
+          Dilerseniz girişten önce online ödeyebilirsiniz. Biletleriniz ayrıca
+          e-posta ile gönderildi.
+        </p>
+      </Shell>
+    );
+  }
+
   return (
     <Shell>
       <p className="text-xs uppercase tracking-[0.28em] text-moss">
@@ -129,13 +177,22 @@ export default async function PayPage({
         Şimdi öde
       </a>
 
+      <form action={`/pay/${token}/door-pass`} method="post" className="mt-3">
+        <button
+          type="submit"
+          className="w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+        >
+          Kapıda öde
+        </button>
+      </form>
+
       <p className="mt-4 text-xs leading-relaxed text-moss/70">
-        Ödeme güvenli sayfada tamamlanır. Onaylandığında size bir e-posta
-        gönderilir.
+        &quot;Kapıda öde&quot; biletinizi karekodla hemen verir, ödemeyi girişte
+        alırız. &quot;Şimdi öde&quot; ile online ödeme güvenli sayfada tamamlanır.
       </p>
 
       <p className="mt-3 text-xs leading-relaxed text-moss/70">
-        &quot;Şimdi öde&quot; diyerek{" "}
+        Ödeme yaparak{" "}
         <a
           href="/mesafeli-satis-sozlesmesi"
           className="text-hazel underline underline-offset-4 hover:text-ink"
