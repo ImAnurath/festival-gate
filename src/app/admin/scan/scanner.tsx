@@ -34,6 +34,16 @@ export default function Scanner() {
     }
   }
 
+  // Release the scanner so staff can retry after an error.
+  function releaseScanner() {
+    busyRef.current = false;
+    try {
+      scannerRef.current?.resume();
+    } catch {
+      // resume throws only if not paused; safe to ignore.
+    }
+  }
+
   async function verify(token: string) {
     setError(null);
     tokenRef.current = token;
@@ -45,6 +55,7 @@ export default function Scanner() {
       });
       if (!res.ok) {
         setError("Yetki hatası veya bağlantı sorunu. Tekrar deneyin.");
+        releaseScanner();
         return;
       }
       const data = (await res.json()) as ScanResult;
@@ -52,6 +63,7 @@ export default function Scanner() {
       scheduleDismiss(data);
     } catch {
       setError("Bağlantı hatası. Tekrar deneyin.");
+      releaseScanner();
     }
   }
 
@@ -65,6 +77,7 @@ export default function Scanner() {
       });
       if (!res.ok) {
         setError("Tahsilat kaydedilemedi. Tekrar deneyin.");
+        releaseScanner();
         return;
       }
       const data = (await res.json()) as ScanResult;
@@ -72,6 +85,7 @@ export default function Scanner() {
       scheduleDismiss(data);
     } catch {
       setError("Bağlantı hatası. Tekrar deneyin.");
+      releaseScanner();
     }
   }
 
