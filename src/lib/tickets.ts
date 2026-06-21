@@ -135,3 +135,39 @@ export async function checkInTicket(
     return { result: "invalid" };
   });
 }
+
+export type ScanResult =
+  | { result: "valid"; holderName: string; code: string; checkedInAt: Date }
+  | { result: "used"; holderName: string; code: string; checkedInAt: Date }
+  | { result: "unpaid"; holderName: string; code: string; quantity: number; amount: number; applicationId: string }
+  | { result: "invalid" };
+
+/**
+ * Payment-aware scan. An APPROVED application that already has a QR pass is a
+ * "pay at the door" guest: return `unpaid` (with the whole-group amount) and do
+ * NOT check in. A PAID application falls through to the normal single-use
+ * check-in. `now` is injectable for tests.
+ */
+export async function scanTicket(
+  identifier: string,
+  now: Date = new Date(),
+): Promise<ScanResult> {
+  const ticket = await prisma.ticket.findFirst({
+    where: { OR: [{ verifyToken: identifier }, { code: identifier }] },
+    include: { application: true },
+  });
+  if (!ticket) return { result: "invalid" };
+
+  if (ticket.application.status === "APPROVED") {
+    return {
+      result: "unpaid",
+      holderName: ticket.holderName,
+      code: ticket.code,
+      quantity: ticket.application.ticketQuantity,
+      amount: ticket.application.ticketQuantity * config.ticketPrice,
+      applicationId: ticket.applicationId,
+    };
+  }
+
+  return checkInTicket(identifier, now);
+}
