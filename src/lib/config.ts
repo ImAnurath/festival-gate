@@ -14,7 +14,7 @@ const schema = z.object({
   IYZICO_API_KEY: z.string().optional(),
   IYZICO_SECRET_KEY: z.string().optional(),
   IYZICO_BASE_URL: z.string().default("https://sandbox-api.iyzipay.com"),
-  NOTIFIER: z.enum(["console", "resend"]),
+  NOTIFIER: z.enum(["console", "resend", "gmail"]),
   WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
   EVENT_END: z.iso.datetime({ message: "EVENT_END must be an ISO datetime, e.g. 2026-09-01T21:00:00Z" }),
@@ -30,7 +30,7 @@ export type Config = {
   iyzicoApiKey: string;
   iyzicoSecretKey: string;
   iyzicoBaseUrl: string;
-  notifier: "console" | "resend";
+  notifier: "console" | "resend" | "gmail";
   whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
   eventEnd: Date;

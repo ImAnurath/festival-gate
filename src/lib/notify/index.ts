@@ -1,11 +1,19 @@
 import { config } from "../config";
 import type { Notifier, EmailMessage } from "./types";
 import { ResendNotifier, ConsoleNotifier } from "./resend";
+import { GmailNotifier } from "./gmail";
 
 export function getNotifier(): Notifier {
+  const from = process.env.MAIL_FROM ?? "Festival <tickets@example.com>";
+  if (config.notifier === "gmail") {
+    const user = process.env.GMAIL_USER ?? "";
+    const appPassword = process.env.GMAIL_APP_PASSWORD ?? "";
+    if (!user || !appPassword)
+      throw new Error("GMAIL_USER and GMAIL_APP_PASSWORD are required when NOTIFIER=gmail");
+    return new GmailNotifier(user, appPassword, from);
+  }
   if (config.notifier === "resend") {
     const apiKey = process.env.RESEND_API_KEY ?? "";
-    const from = process.env.MAIL_FROM ?? "Festival <tickets@example.com>";
     if (!apiKey) throw new Error("RESEND_API_KEY is required when NOTIFIER=resend");
     return new ResendNotifier(apiKey, from);
   }

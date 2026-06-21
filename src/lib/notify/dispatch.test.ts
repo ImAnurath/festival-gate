@@ -26,14 +26,15 @@ beforeEach(() => {
 });
 
 describe("dispatchPayLink", () => {
-  it("sends WhatsApp and not email when a phone is present", async () => {
+  it("sends BOTH email and WhatsApp when phone and email are present", async () => {
     await dispatchPayLink({ name: "Ali", email: "ali@example.com", phone: "+905321234567" }, payUrl);
+    expect(notifyMock).toHaveBeenCalledTimes(1);
+    expect(notifyMock).toHaveBeenCalledWith("ali@example.com", expect.anything());
     expect(sendPayLink).toHaveBeenCalledTimes(1);
     expect(sendPayLink).toHaveBeenCalledWith(
       "+905321234567",
       expect.objectContaining({ name: "Ali", payUrl })
     );
-    expect(notifyMock).not.toHaveBeenCalled();
   });
 
   it("sends email and not WhatsApp when no phone is present", async () => {
@@ -43,11 +44,18 @@ describe("dispatchPayLink", () => {
     expect(sendPayLink).not.toHaveBeenCalled();
   });
 
-  it("swallows a WhatsApp send failure (best-effort, no throw)", async () => {
+  it("sends WhatsApp and not email when no email is present", async () => {
+    await dispatchPayLink({ name: "Ali", email: "", phone: "+905321234567" }, payUrl);
+    expect(sendPayLink).toHaveBeenCalledTimes(1);
+    expect(notifyMock).not.toHaveBeenCalled();
+  });
+
+  it("swallows a WhatsApp send failure and still emails (best-effort, no throw)", async () => {
     sendPayLink.mockRejectedValueOnce(new Error("twilio down"));
     await expect(
       dispatchPayLink({ name: "Ali", email: "ali@example.com", phone: "+905321234567" }, payUrl)
     ).resolves.toBeUndefined();
+    expect(notifyMock).toHaveBeenCalledTimes(1);
   });
 });
 
