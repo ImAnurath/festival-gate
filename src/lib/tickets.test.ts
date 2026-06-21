@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { resetDb } from "@/test/helpers";
 import { createApplication, approveApplication, markPaidByToken, NotPayableError } from "./applications";
-import { attendeesFor, issueTickets, loadTicketsByAccessToken, checkInTicket } from "./tickets";
+import { attendeesFor, issueTickets, loadTicketsByAccessToken, checkInTicket, scanTicket } from "./tickets";
 
 // DB-backed; skip when no Postgres is reachable (same pattern as applications.test.ts).
 let dbReady = false;
@@ -214,5 +214,52 @@ suite("checkInTicket", () => {
     expect(results).toEqual(["used", "valid"]);
     const row = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.id } });
     expect(row.status).toBe("USED");
+  });
+});
+
+async function doorPassApplication() {
+  const app = await createApplication(input);
+  const approved = await approveApplication(app.id);
+  // Issue tickets while leaving status APPROVED (the "Kapıda öde" state).
+  const tickets = await issueTickets(prisma, approved);
+  const reloaded = await prisma.application.findUniqueOrThrow({
+    where: { id: app.id },
+    include: { tickets: true },
+  });
+  return { application: reloaded, tickets };
+}
+
+suite("scanTicket", () => {
+  it("returns unpaid for an APPROVED application that has a QR pass", async () => {
+    const { application, tickets } = await doorPassApplication();
+    const res = await scanTicket(tickets[0].verifyToken);
+    expect(res.result).toBe("unpaid");
+    if (res.result === "unpaid") {
+      expect(res.applicationId).toBe(application.id);
+      expect(res.quantity).toBe(input.ticketQuantity); // 3
+      expect(res.amount).toBe(input.ticketQuantity * 500); // ticketPrice in test env = 500
+      expect(res.holderName).toBe(tickets[0].holderName);
+    }
+    // Crucially, an unpaid scan must NOT check the ticket in.
+    const row = await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } });
+    expect(row.status).toBe("VALID");
+  });
+
+  it("checks in a VALID ticket of a PAID application (valid)", async () => {
+    const paid = await payNewApplication();
+    const res = await scanTicket(paid.tickets[0].verifyToken);
+    expect(res.result).toBe("valid");
+  });
+
+  it("returns used on the second scan of a PAID ticket", async () => {
+    const paid = await payNewApplication();
+    await scanTicket(paid.tickets[0].verifyToken);
+    const res = await scanTicket(paid.tickets[0].verifyToken);
+    expect(res.result).toBe("used");
+  });
+
+  it("returns invalid for an unknown identifier", async () => {
+    const res = await scanTicket("not-a-real-token");
+    expect(res.result).toBe("invalid");
   });
 });

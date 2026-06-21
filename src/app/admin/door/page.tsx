@@ -78,7 +78,14 @@ export default async function DoorPage({
             )}
             {pending.map((a) => (
               <tr key={a.id} className="border-t border-ink/10">
-                <td className="px-4 py-3 font-medium text-ink">{a.name}</td>
+                <td className="px-4 py-3 font-medium text-ink">
+                  {a.name}
+                  {a.ticketsAccessToken != null && (
+                    <span className="ml-2 inline-block rounded-sm border border-ink/10 bg-cream-deep px-1.5 py-0.5 text-xs font-normal text-moss">
+                      Karekod var
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-ink">{a.ticketQuantity}</td>
                 <td className="px-4 py-3 text-ink">
                   {a.ticketQuantity * config.ticketPrice} TL

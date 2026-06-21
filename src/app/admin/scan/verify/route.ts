@@ -1,9 +1,9 @@
 import { requireAdmin } from "@/lib/session";
-import { checkInTicket } from "@/lib/tickets";
+import { scanTicket } from "@/lib/tickets";
 
-// Admin-only ticket check-in. The proxy.ts cookie gate is coarse; this handler
+// Admin-only ticket scan. The proxy.ts cookie gate is coarse; this handler
 // enforces the real boundary via requireAdmin() and returns 401 on failure
-// (the scanner treats any non-200 as a transient error, not a check-in result).
+// (the scanner treats any non-200 as a transient error, not a scan result).
 export async function POST(req: Request) {
   try {
     await requireAdmin();
@@ -16,6 +16,6 @@ export async function POST(req: Request) {
     body && typeof body.token === "string" ? body.token.trim() : "";
   if (!token) return Response.json({ result: "invalid" });
 
-  const result = await checkInTicket(token);
+  const result = await scanTicket(token);
   return Response.json(result);
 }

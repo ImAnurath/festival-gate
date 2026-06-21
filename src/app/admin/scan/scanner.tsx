@@ -3,16 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
-type CheckInResult =
+type ScanResult =
   | { result: "valid"; holderName: string; code: string; checkedInAt: string }
   | { result: "used"; holderName: string; code: string; checkedInAt: string }
+  | { result: "unpaid"; holderName: string; code: string; quantity: number; amount: number; applicationId: string }
   | { result: "invalid" };
 
 const READER_ID = "kf-scan-reader";
 const RESULT_MS = 2500;
 
 export default function Scanner() {
-  const [result, setResult] = useState<CheckInResult | null>(null);
+  const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
@@ -21,9 +22,31 @@ export default function Scanner() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const busyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The token of the current scan, kept so an unpaid overlay can confirm collection.
+  const tokenRef = useRef<string>("");
+
+  // Auto-dismiss every result EXCEPT unpaid, which waits for a staff decision.
+  function scheduleDismiss(next: ScanResult | null) {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    if (next && next.result !== "unpaid") {
+      timerRef.current = setTimeout(dismiss, RESULT_MS);
+    }
+  }
+
+  // Release the scanner so staff can retry after an error.
+  function releaseScanner() {
+    busyRef.current = false;
+    try {
+      scannerRef.current?.resume();
+    } catch {
+      // resume throws only if not paused; safe to ignore.
+    }
+  }
 
   async function verify(token: string) {
     setError(null);
+    tokenRef.current = token;
     try {
       const res = await fetch("/admin/scan/verify", {
         method: "POST",
@@ -32,11 +55,37 @@ export default function Scanner() {
       });
       if (!res.ok) {
         setError("Yetki hatası veya bağlantı sorunu. Tekrar deneyin.");
+        releaseScanner();
         return;
       }
-      setResult((await res.json()) as CheckInResult);
+      const data = (await res.json()) as ScanResult;
+      setResult(data);
+      scheduleDismiss(data);
     } catch {
       setError("Bağlantı hatası. Tekrar deneyin.");
+      releaseScanner();
+    }
+  }
+
+  async function collect(applicationId: string) {
+    setError(null);
+    try {
+      const res = await fetch("/admin/scan/collect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tokenRef.current, applicationId }),
+      });
+      if (!res.ok) {
+        setError("Tahsilat kaydedilemedi. Tekrar deneyin.");
+        releaseScanner();
+        return;
+      }
+      const data = (await res.json()) as ScanResult;
+      setResult(data);
+      scheduleDismiss(data);
+    } catch {
+      setError("Bağlantı hatası. Tekrar deneyin.");
+      releaseScanner();
     }
   }
 
@@ -61,7 +110,6 @@ export default function Scanner() {
       // pause throws only if not scanning; safe to ignore.
     }
     await verify(token);
-    timerRef.current = setTimeout(dismiss, RESULT_MS);
   }
 
   useEffect(() => {
@@ -105,8 +153,6 @@ export default function Scanner() {
     busyRef.current = true;
     setManualValue("");
     void verify(v);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(dismiss, RESULT_MS);
   }
 
   const bg =
@@ -114,7 +160,9 @@ export default function Scanner() {
       ? "bg-green-600"
       : result?.result === "used"
         ? "bg-amber-500"
-        : "bg-red-600";
+        : result?.result === "unpaid"
+          ? "bg-sky-700"
+          : "bg-red-600";
 
   return (
     <div className="mt-6">
@@ -146,7 +194,38 @@ export default function Scanner() {
         </form>
       )}
 
-      {result && (
+      {result && result.result === "unpaid" && (
+        <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center px-6 text-center text-white ${bg}`}>
+          <span className="text-6xl leading-none">₺</span>
+          <span className="mt-4 text-2xl font-semibold uppercase tracking-wide">
+            Ödenmedi
+          </span>
+          <span className="mt-6 text-3xl font-bold">{result.holderName}</span>
+          <span className="mt-1 text-lg opacity-90">{result.code}</span>
+          <span className="mt-6 text-4xl font-bold">
+            {result.amount} TL
+          </span>
+          <span className="mt-1 text-sm opacity-90">{result.quantity} bilet</span>
+          <div className="mt-10 flex w-full max-w-xs flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => collect(result.applicationId)}
+              className="rounded-sm bg-white px-6 py-3.5 text-sm font-semibold uppercase tracking-wide text-sky-800"
+            >
+              Tahsil edildi
+            </button>
+            <button
+              type="button"
+              onClick={dismiss}
+              className="rounded-sm border border-white/60 px-6 py-3.5 text-sm font-medium uppercase tracking-wide text-white"
+            >
+              Vazgeç
+            </button>
+          </div>
+        </div>
+      )}
+
+      {result && result.result !== "unpaid" && (
         <button
           type="button"
           onClick={dismiss}
