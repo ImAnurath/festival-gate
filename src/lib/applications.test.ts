@@ -10,6 +10,8 @@ import {
   markPaidAtDoor,
   undoDoorPayment,
   collectAtDoorAndCheckIn,
+  searchApprovedApplications,
+  searchAttendeeApplications,
 } from "./applications";
 import { issueTickets } from "./tickets";
 
@@ -204,5 +206,36 @@ suite("collectAtDoorAndCheckIn", () => {
     expect(res.result).toBe("valid");
     const scanned = await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } });
     expect(scanned.status).toBe("USED");
+  });
+});
+
+suite("search helpers", () => {
+  it("searchApprovedApplications returns only APPROVED, name-filtered, sorted", async () => {
+    const a = await createApplication({ ...input, name: "Zeynep" });
+    await approveApplication(a.id);
+    const b = await createApplication({ ...input, name: "Ahmet" });
+    await approveApplication(b.id);
+    await createApplication({ ...input, name: "Pending Pelin" }); // stays PENDING
+
+    const all = await searchApprovedApplications("");
+    expect(all.map((x) => x.name)).toEqual(["Ahmet", "Zeynep"]); // sorted, PENDING excluded
+
+    const filtered = await searchApprovedApplications("zey");
+    expect(filtered.map((x) => x.name)).toEqual(["Zeynep"]); // case-insensitive
+  });
+
+  it("searchAttendeeApplications returns only apps with issued tickets, including tickets", async () => {
+    // Door-pass: APPROVED with tickets issued.
+    const a = await createApplication({ ...input, name: "Mert" });
+    const approved = await approveApplication(a.id);
+    await issueTickets(prisma, approved);
+    // APPROVED without tickets must be excluded.
+    const b = await createApplication({ ...input, name: "Mehmet" });
+    await approveApplication(b.id);
+
+    const res = await searchAttendeeApplications("me");
+    expect(res.map((x) => x.name)).toEqual(["Mert"]); // Mehmet has no tickets
+    expect(res[0].tickets.length).toBe(2); // buyer + 1 guest
+    expect(res[0].tickets[0].verifyToken).toBeTruthy();
   });
 });

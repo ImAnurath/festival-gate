@@ -135,6 +135,34 @@ export async function collectAtDoorAndCheckIn(
   return checkInTicket(identifier, now);
 }
 
+// Name-search over APPROVED (unpaid) applications, sorted by name. Shared by the
+// desktop door screen and the mobile door screen. An empty query returns all.
+export async function searchApprovedApplications(query: string) {
+  const q = query.trim();
+  return prisma.application.findMany({
+    where: {
+      status: "APPROVED",
+      ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: { name: "asc" },
+  });
+}
+
+// Name-search over applications that already hold a QR pass (ticketsAccessToken
+// set) — PAID guests and APPROVED "pay at the door" guests alike — with their
+// tickets included for the mobile Guests screen's manual check-in.
+export async function searchAttendeeApplications(query: string) {
+  const q = query.trim();
+  return prisma.application.findMany({
+    where: {
+      ticketsAccessToken: { not: null },
+      ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: { name: "asc" },
+    include: { tickets: { orderBy: { createdAt: "asc" } } },
+  });
+}
+
 export async function markPaidByToken(payToken: string, paymentRef: string, amount: number) {
   const now = new Date();
   return prisma.$transaction(async (tx) => {
