@@ -34,6 +34,7 @@ describe("GET /admin/m/api/stats", () => {
     requireAdminMock.mockRejectedValue(new Error("UNAUTHORIZED"));
     const res = await GET();
     expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: "unauthorized" });
     expect(gateStatsMock).not.toHaveBeenCalled();
   });
 });

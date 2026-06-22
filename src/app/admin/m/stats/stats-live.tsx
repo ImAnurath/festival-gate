@@ -23,6 +23,7 @@ export default function StatsLive({ initial }: { initial: GateStats }) {
       try {
         const res = await fetch("/admin/m/api/stats", { cache: "no-store" });
         if (res.ok && alive) setStats((await res.json()) as GateStats);
+        // non-ok response: keep the last good snapshot (no blanking)
       } catch {
         // keep the last good snapshot
       }

@@ -82,6 +82,7 @@ suite("gateStats", () => {
     expect(s.paidTickets).toBe(2); // now paid
     expect(s.checkedIn).toBe(1);
     expect(s.outstandingDoorPasses).toBe(0); // no longer APPROVED
+    expect(s.remaining).toBe(1);
   });
 
   it("returns all-zero on an empty DB", async () => {

@@ -237,5 +237,7 @@ suite("search helpers", () => {
     expect(res.map((x) => x.name)).toEqual(["Mert"]); // Mehmet has no tickets
     expect(res[0].tickets.length).toBe(2); // buyer + 1 guest
     expect(res[0].tickets[0].verifyToken).toBeTruthy();
+    expect(res[0].tickets[0].isBuyer).toBe(true);
+    expect(res[0].tickets[0].holderName).toBe("Mert");
   });
 });
