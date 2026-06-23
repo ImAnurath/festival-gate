@@ -35,9 +35,21 @@ export default async function MobileAdminLayout({
       <header className="flex items-center justify-between border-b border-ink/10 bg-mist px-4 py-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <a
           href="/admin"
-          className="-m-2 p-2 text-sm text-moss transition-colors hover:text-ink"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-ink/15 bg-cream px-3.5 text-sm font-medium text-ink transition-colors hover:bg-ink/5 active:bg-ink/10"
         >
-          &larr; Başvurular
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Başvurular
         </a>
         <span className="font-display text-sm font-semibold tracking-wide text-ink">
           KİNDZİ FEST
