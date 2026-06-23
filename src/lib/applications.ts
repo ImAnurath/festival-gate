@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { config } from "./config";
-import { approve, reject } from "./state-machine";
+import { TransitionError } from "./state-machine";
 import { generatePayToken, expiryFromNow } from "./token";
 import { issueTickets, checkInTicket, type CheckInResult } from "./tickets";
 
@@ -37,39 +37,53 @@ export async function createApplication(input: CreateInput) {
   });
 }
 
+// Atomic guarded transition (only PENDING -> APPROVED, per state-machine
+// `approve`). The where-clause is the concurrency boundary: two admins acting
+// at once can't both "win" or clobber a concurrent reject. count === 0 means
+// the row was no longer PENDING.
 export async function approveApplication(id: string) {
-  const app = await prisma.application.findUniqueOrThrow({ where: { id } });
-  const next = approve(app.status as Parameters<typeof approve>[0]);
-  return prisma.application.update({
-    where: { id },
+  const result = await prisma.application.updateMany({
+    where: { id, status: "PENDING" },
     data: {
-      status: next,
+      status: "APPROVED",
       payToken: generatePayToken(),
       payTokenExpiresAt: expiryFromNow(config.payTokenTtlHours),
     },
   });
+  if (result.count === 0) {
+    throw new TransitionError("Başvuru onaylanamıyor (zaten işlenmiş olabilir)");
+  }
+  return prisma.application.findUniqueOrThrow({ where: { id } });
 }
 
+// Atomic guarded transition (any non-PAID state -> REJECTED, per state-machine
+// `reject`). A PAID application (or one paid concurrently) is left untouched.
 export async function rejectApplication(id: string) {
-  const app = await prisma.application.findUniqueOrThrow({ where: { id } });
-  const next = reject(app.status as Parameters<typeof reject>[0]);
-  return prisma.application.update({ where: { id }, data: { status: next } });
+  const result = await prisma.application.updateMany({
+    where: { id, status: { not: "PAID" } },
+    data: { status: "REJECTED" },
+  });
+  if (result.count === 0) {
+    throw new TransitionError("Ödenmiş başvuru reddedilemez");
+  }
+  return prisma.application.findUniqueOrThrow({ where: { id } });
 }
 
 // Re-issue a fresh payment token + expiry for an already-approved application
 // (resend a link, or replace one that expired). The previous link stops working.
+// Atomic guard on APPROVED so it can't race a concurrent reject/payment.
 export async function reissuePayLink(id: string) {
-  const app = await prisma.application.findUniqueOrThrow({ where: { id } });
-  if (app.status !== "APPROVED") {
-    throw new Error("Yalnızca onaylanmış başvurular için bağlantı yenilenebilir");
-  }
-  return prisma.application.update({
-    where: { id },
+  const result = await prisma.application.updateMany({
+    where: { id, status: "APPROVED" },
     data: {
       payToken: generatePayToken(),
       payTokenExpiresAt: expiryFromNow(config.payTokenTtlHours),
     },
   });
+  if (result.count === 0) {
+    throw new Error("Yalnızca onaylanmış başvurular için bağlantı yenilenebilir");
+  }
+  return prisma.application.findUniqueOrThrow({ where: { id } });
 }
 
 // Mark an APPROVED application paid at the gate (organizer's bank POS terminal).
@@ -135,9 +149,15 @@ export async function collectAtDoorAndCheckIn(
   return checkInTicket(identifier, now);
 }
 
+// Cap on rows returned by the door type-ahead searches. Plenty for narrowing by
+// name at the gate, and it stops an empty query from loading the whole table
+// once there are thousands of applications.
+const SEARCH_LIMIT = 100;
+
 // Name-search over APPROVED (unpaid) applications, sorted by name. Shared by the
-// desktop door screen and the mobile door screen. An empty query returns all.
-export async function searchApprovedApplications(query: string) {
+// desktop door screen and the mobile door screen. An empty query returns the
+// first SEARCH_LIMIT rows.
+export async function searchApprovedApplications(query: string, limit = SEARCH_LIMIT) {
   const q = query.trim();
   return prisma.application.findMany({
     where: {
@@ -145,13 +165,14 @@ export async function searchApprovedApplications(query: string) {
       ...(q ? { name: { contains: q, mode: "insensitive" as const } } : {}),
     },
     orderBy: { name: "asc" },
+    take: limit,
   });
 }
 
 // Name-search over applications that already hold a QR pass (ticketsAccessToken
 // set) — PAID guests and APPROVED "pay at the door" guests alike — with their
 // tickets included for the mobile Guests screen's manual check-in.
-export async function searchAttendeeApplications(query: string) {
+export async function searchAttendeeApplications(query: string, limit = SEARCH_LIMIT) {
   const q = query.trim();
   return prisma.application.findMany({
     where: {
@@ -160,6 +181,30 @@ export async function searchAttendeeApplications(query: string) {
     },
     orderBy: { name: "asc" },
     include: { tickets: { orderBy: { createdAt: "asc" } } },
+    take: limit,
+  });
+}
+
+// Returns the paid application (with tickets) only when its post-payment
+// notification still needs sending — i.e. it is PAID but ticketsDeliveredAt was
+// never stamped (a crash happened between marking paid and dispatching). The
+// callback uses this to redeliver on a webhook retry without re-sending to
+// guests who already got their tickets. Returns null otherwise.
+export async function loadUndeliveredPaid(payToken: string) {
+  const app = await prisma.application.findUnique({
+    where: { payToken },
+    include: { tickets: true },
+  });
+  if (!app || app.status !== "PAID" || app.ticketsDeliveredAt) return null;
+  return app;
+}
+
+// Stamp that the tickets notification has been dispatched, so future webhook
+// retries don't resend it.
+export async function stampTicketsDelivered(id: string) {
+  await prisma.application.update({
+    where: { id },
+    data: { ticketsDeliveredAt: new Date() },
   });
 }
 

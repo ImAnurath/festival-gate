@@ -1,6 +1,6 @@
-import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "../src/lib/password";
 
 // Run via `tsx` outside Next, so .env is not auto-loaded. Load it the same way
 // prisma.config.ts does. In production the platform sets env vars directly and
@@ -24,8 +24,8 @@ async function main() {
 
   await prisma.adminUser.upsert({
     where: { email },
-    update: { passwordHash: createHash("sha256").update(password).digest("hex") },
-    create: { email, passwordHash: createHash("sha256").update(password).digest("hex") },
+    update: { passwordHash: hashPassword(password) },
+    create: { email, passwordHash: hashPassword(password) },
   });
   console.log(`Admin ${email} ready.`);
   await prisma.$disconnect();
