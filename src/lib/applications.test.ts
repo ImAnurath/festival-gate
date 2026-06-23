@@ -6,10 +6,15 @@ import {
   createApplication,
   approveApplication,
   rejectApplication,
+  reissuePayLink,
+  loadUndeliveredPaid,
+  stampTicketsDelivered,
   markPaidByToken,
   markPaidAtDoor,
   undoDoorPayment,
   collectAtDoorAndCheckIn,
+  searchApprovedApplications,
+  searchAttendeeApplications,
 } from "./applications";
 import { issueTickets } from "./tickets";
 
@@ -97,6 +102,78 @@ suite("application use-cases", () => {
     const a = await createApplication(input);
     const r = await rejectApplication(a.id);
     expect(r.status).toBe("REJECTED");
+  });
+
+  it("approve refuses an application that is no longer PENDING", async () => {
+    const a = await createApplication(input);
+    await approveApplication(a.id);
+    await expect(approveApplication(a.id)).rejects.toThrow(); // already APPROVED
+  });
+
+  it("reject refuses a PAID application", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidByToken(approved.payToken!, "stub_ref", 1000);
+    await expect(rejectApplication(a.id)).rejects.toThrow();
+  });
+
+  it("reissuePayLink refuses a non-APPROVED application", async () => {
+    const a = await createApplication(input); // still PENDING
+    await expect(reissuePayLink(a.id)).rejects.toThrow();
+  });
+
+  // The point of making approve atomic: two admins clicking at once must not
+  // both succeed, and the row must end in a single consistent APPROVED state.
+  it("concurrent approves: exactly one wins, status stays APPROVED", async () => {
+    const a = await createApplication(input);
+    const results = await Promise.allSettled([
+      approveApplication(a.id),
+      approveApplication(a.id),
+    ]);
+    const won = results.filter((r) => r.status === "fulfilled");
+    expect(won.length).toBe(1);
+    const app = await prisma.application.findUniqueOrThrow({ where: { id: a.id } });
+    expect(app.status).toBe("APPROVED");
+  });
+
+  // Approve racing reject: whichever guard matches first wins; the loser throws.
+  // The row must never end in an inconsistent or PENDING state.
+  it("concurrent approve vs reject: one wins, state is terminal", async () => {
+    const a = await createApplication(input);
+    const [approveRes, rejectRes] = await Promise.allSettled([
+      approveApplication(a.id),
+      rejectApplication(a.id),
+    ]);
+    const winners = [approveRes, rejectRes].filter((r) => r.status === "fulfilled");
+    expect(winners.length).toBeGreaterThanOrEqual(1);
+    const app = await prisma.application.findUniqueOrThrow({ where: { id: a.id } });
+    expect(["APPROVED", "REJECTED"]).toContain(app.status);
+  });
+
+  it("loadUndeliveredPaid returns a paid-but-undelivered app, then null once stamped", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+
+    // Not paid yet -> nothing to deliver.
+    expect(await loadUndeliveredPaid(approved.payToken!)).toBeNull();
+
+    await markPaidByToken(approved.payToken!, "stub_ref", 1000);
+    const pending = await loadUndeliveredPaid(approved.payToken!);
+    expect(pending).not.toBeNull();
+    expect(pending!.tickets.length).toBeGreaterThan(0); // includes tickets for delivery
+
+    // After stamping, a webhook retry finds nothing to resend.
+    await stampTicketsDelivered(pending!.id);
+    expect(await loadUndeliveredPaid(approved.payToken!)).toBeNull();
+  });
+
+  it("searchApprovedApplications caps the number of rows returned", async () => {
+    for (let i = 0; i < 3; i++) {
+      const a = await createApplication({ ...input, name: `Search ${i}` });
+      await approveApplication(a.id);
+    }
+    const limited = await searchApprovedApplications("Search", 2);
+    expect(limited.length).toBe(2);
   });
 });
 
@@ -204,5 +281,38 @@ suite("collectAtDoorAndCheckIn", () => {
     expect(res.result).toBe("valid");
     const scanned = await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } });
     expect(scanned.status).toBe("USED");
+  });
+});
+
+suite("search helpers", () => {
+  it("searchApprovedApplications returns only APPROVED, name-filtered, sorted", async () => {
+    const a = await createApplication({ ...input, name: "Zeynep" });
+    await approveApplication(a.id);
+    const b = await createApplication({ ...input, name: "Ahmet" });
+    await approveApplication(b.id);
+    await createApplication({ ...input, name: "Pending Pelin" }); // stays PENDING
+
+    const all = await searchApprovedApplications("");
+    expect(all.map((x) => x.name)).toEqual(["Ahmet", "Zeynep"]); // sorted, PENDING excluded
+
+    const filtered = await searchApprovedApplications("zey");
+    expect(filtered.map((x) => x.name)).toEqual(["Zeynep"]); // case-insensitive
+  });
+
+  it("searchAttendeeApplications returns only apps with issued tickets, including tickets", async () => {
+    // Door-pass: APPROVED with tickets issued.
+    const a = await createApplication({ ...input, name: "Mert" });
+    const approved = await approveApplication(a.id);
+    await issueTickets(prisma, approved);
+    // APPROVED without tickets must be excluded.
+    const b = await createApplication({ ...input, name: "Mehmet" });
+    await approveApplication(b.id);
+
+    const res = await searchAttendeeApplications("me");
+    expect(res.map((x) => x.name)).toEqual(["Mert"]); // Mehmet has no tickets
+    expect(res[0].tickets.length).toBe(2); // buyer + 1 guest
+    expect(res[0].tickets[0].verifyToken).toBeTruthy();
+    expect(res[0].tickets[0].isBuyer).toBe(true);
+    expect(res[0].tickets[0].holderName).toBe("Mert");
   });
 });

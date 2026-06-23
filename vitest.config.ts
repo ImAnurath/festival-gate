@@ -1,6 +1,16 @@
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+// Load an optional, gitignored local env file so each developer can point the
+// DB-backed tests at their own Postgres (e.g. a non-default password) without
+// editing this committed config. Absent file is fine (tests then fall back to
+// the default URL below, or skip when no DB is reachable).
+try {
+  process.loadEnvFile(".env.test.local");
+} catch {
+  // no local override file; use defaults
+}
+
 // DB-backed tests use Postgres. Override with DATABASE_URL_TEST if your local
 // Postgres differs; otherwise they skip gracefully when no DB is reachable.
 const TEST_DATABASE_URL =

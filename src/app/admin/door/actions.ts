@@ -9,6 +9,7 @@ export async function markPaidAtDoorAction(formData: FormData) {
   const id = String(formData.get("id"));
   await markPaidAtDoor(id);
   revalidatePath("/admin/door");
+  revalidatePath("/admin/m/door");
 }
 
 export async function undoDoorPaymentAction(formData: FormData) {
@@ -16,4 +17,5 @@ export async function undoDoorPaymentAction(formData: FormData) {
   const id = String(formData.get("id"));
   await undoDoorPayment(id);
   revalidatePath("/admin/door");
+  revalidatePath("/admin/m/door");
 }

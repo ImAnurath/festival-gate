@@ -1,0 +1,13 @@
+{
+  "name": "KİNDZİ FEST Admin",
+  "short_name": "KF Admin",
+  "start_url": "/admin/m",
+  "scope": "/admin/m",
+  "display": "standalone",
+  "background_color": "#f3eee2",
+  "theme_color": "#16332a",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

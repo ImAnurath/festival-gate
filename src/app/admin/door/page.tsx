@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getSession } from "@/lib/session";
 import { markPaidAtDoorAction, undoDoorPaymentAction } from "./actions";
+import { searchApprovedApplications } from "@/lib/applications";
 
 // Door collection screen. Staff charge the guest on the bank POS terminal, then
 // tap "Ödendi (POS)" to mark the application paid (no ticket, no notification).
@@ -19,13 +20,7 @@ export default async function DoorPage({
   const { q } = await searchParams;
   const query = (q ?? "").trim();
 
-  const pending = await prisma.application.findMany({
-    where: {
-      status: "APPROVED",
-      ...(query ? { name: { contains: query, mode: "insensitive" as const } } : {}),
-    },
-    orderBy: { name: "asc" },
-  });
+  const pending = await searchApprovedApplications(query);
 
   const collected = await prisma.application.findMany({
     where: { status: "PAID", paymentRef: "door-pos" },

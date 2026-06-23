@@ -1,10 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Application, Ticket } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getPaymentProvider } from "@/lib/payment";
-import { markPaidByToken, NotPayableError } from "@/lib/applications";
+import {
+  markPaidByToken,
+  loadUndeliveredPaid,
+  stampTicketsDelivered,
+  NotPayableError,
+} from "@/lib/applications";
 import { isShowcaseToken } from "@/lib/payment/showcase";
 import { dispatchTickets } from "@/lib/notify/dispatch";
+
+// Send the post-payment tickets notification exactly once. dispatchTickets is
+// internally best-effort (it never throws on a send failure), so the real thing
+// this guards against is a crash/timeout between marking paid and dispatching:
+// the next webhook retry redelivers because ticketsDeliveredAt is still unset.
+// (A rare double-send is possible if two retries race; that is harmless.)
+async function deliverTicketsOnce(app: Application & { tickets: Ticket[] }) {
+  if (app.ticketsDeliveredAt) return;
+  await dispatchTickets(app, app.tickets);
+  await stampTicketsDelivered(app.id);
+}
 
 // The callback serves two callers: the stub's /confirm route (JSON in, JSON out)
 // and iyzico's hosted page (form POST from the buyer's browser, expects a redirect).
@@ -52,7 +69,11 @@ export async function POST(req: NextRequest) {
     paid = await markPaidByToken(result.payToken, result.ref, expected);
   } catch (err) {
     if (err instanceof NotPayableError) {
-      // Already paid, expired, or unknown -> idempotent no-op.
+      // Already paid, expired, or unknown -> idempotent no-op. But if a prior
+      // attempt marked it paid then died before sending the tickets, redeliver
+      // now (loadUndeliveredPaid returns null once delivery has been stamped).
+      const pending = await loadUndeliveredPaid(result.payToken);
+      if (pending) await deliverTicketsOnce(pending);
       return isBrowser
         ? redirectTo(result.payToken)
         : NextResponse.json({ ok: true, note: "no-op" });
@@ -61,13 +82,7 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  // Deliver the tickets (email with PDF + WhatsApp link). Best-effort: a send
-  // failure must never undo or mask the paid result.
-  try {
-    await dispatchTickets(paid, paid.tickets);
-  } catch {
-    // dispatchTickets is already best-effort internally; guard anyway.
-  }
+  await deliverTicketsOnce(paid);
 
   return isBrowser ? redirectTo(result.payToken) : NextResponse.json({ ok: true });
 }
