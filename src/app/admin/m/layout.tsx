@@ -35,6 +35,12 @@ export default async function MobileAdminLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
       <SwRegister />
+      <header className="flex items-center justify-between border-b border-ink/10 bg-mist px-4 py-3">
+        <a href="/admin" className="text-sm text-moss transition-colors hover:text-ink">
+          &larr; Başvurular
+        </a>
+        <span className="text-xs uppercase tracking-wider text-moss">Kapı</span>
+      </header>
       <div className="flex-1 pb-20">{children}</div>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-ink/10 bg-mist">
         {tabs.map((t) => (
