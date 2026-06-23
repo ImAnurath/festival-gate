@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import SwRegister from "./sw-register";
+import BottomNav from "./bottom-nav";
 
 export const metadata: Metadata = {
   title: "KF Admin",
@@ -10,20 +11,16 @@ export const metadata: Metadata = {
   icons: { icon: "/icons/icon.svg", apple: "/icons/icon.svg" },
 };
 
+// viewportFit "cover" lets the safe-area-inset env() values resolve to real
+// notch / home-indicator sizes on installed phones.
 export const viewport: Viewport = {
   themeColor: "#16332a",
+  viewportFit: "cover",
 };
 
-const tabs = [
-  { href: "/admin/m/scan", label: "Tara" },
-  { href: "/admin/m/guests", label: "Misafirler" },
-  { href: "/admin/m/door", label: "Kapı" },
-  { href: "/admin/m/stats", label: "Sayım" },
-];
-
 // Server layout: the single admin guard for every /admin/m/* screen. Renders a
-// fixed bottom tab bar (no active-state highlight; kept a server component so the
-// guard stays here). Child pages do not re-check the session.
+// safe-area-aware header plus the client BottomNav (which owns active-tab state).
+// Child pages do not re-check the session.
 export default async function MobileAdminLayout({
   children,
 }: {
@@ -35,24 +32,19 @@ export default async function MobileAdminLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
       <SwRegister />
-      <header className="flex items-center justify-between border-b border-ink/10 bg-mist px-4 py-3">
-        <a href="/admin" className="text-sm text-moss transition-colors hover:text-ink">
+      <header className="flex items-center justify-between border-b border-ink/10 bg-mist px-4 py-3 pt-[max(env(safe-area-inset-top),0.75rem)]">
+        <a
+          href="/admin"
+          className="-m-2 p-2 text-sm text-moss transition-colors hover:text-ink"
+        >
           &larr; Başvurular
         </a>
-        <span className="text-xs uppercase tracking-wider text-moss">Kapı</span>
+        <span className="font-display text-sm font-semibold tracking-wide text-ink">
+          KİNDZİ FEST
+        </span>
       </header>
-      <div className="flex-1 pb-20">{children}</div>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-ink/10 bg-mist">
-        {tabs.map((t) => (
-          <a
-            key={t.href}
-            href={t.href}
-            className="flex items-center justify-center py-4 text-sm font-medium text-ink"
-          >
-            {t.label}
-          </a>
-        ))}
-      </nav>
+      <div className="flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))]">{children}</div>
+      <BottomNav />
     </div>
   );
 }

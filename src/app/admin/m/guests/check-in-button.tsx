@@ -45,7 +45,7 @@ export default function CheckInButton({ token }: { token: string }) {
         type="button"
         disabled={busy}
         onClick={() => post("/admin/scan/collect", { token, applicationId: state.applicationId })}
-        className="rounded-sm bg-sky-700 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+        className="min-h-[40px] rounded-sm bg-sky-700 px-4 py-2 text-sm font-medium text-white transition-opacity active:opacity-80 disabled:opacity-50"
       >
         {state.amount} TL al + giriş
       </button>
@@ -56,7 +56,7 @@ export default function CheckInButton({ token }: { token: string }) {
       type="button"
       disabled={busy}
       onClick={() => post("/admin/scan/verify", { token })}
-      className="rounded-sm bg-sea px-3 py-1.5 text-xs font-medium text-cream disabled:opacity-50"
+      className="min-h-[40px] rounded-sm bg-sea px-4 py-2 text-sm font-medium text-cream transition-opacity active:opacity-80 disabled:opacity-50"
     >
       Giriş yap
     </button>

@@ -3,11 +3,19 @@
 import { useEffect, useState } from "react";
 import type { GateStats } from "@/lib/stats";
 
-function Card({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
+function Tile({
+  label,
+  value,
+  valueClassName = "text-4xl",
+}: {
+  label: string;
+  value: number | string;
+  valueClassName?: string;
+}) {
   return (
-    <div className={`rounded-sm border p-4 ${accent ? "border-sea/30 bg-sea/5" : "border-ink/10 bg-mist"}`}>
+    <div className="rounded-md border border-ink/10 bg-mist p-5">
       <p className="text-xs uppercase tracking-wider text-moss">{label}</p>
-      <p className="mt-1 font-display text-4xl font-semibold text-ink">{value}</p>
+      <p className={`mt-1 font-display font-semibold text-ink ${valueClassName}`}>{value}</p>
     </div>
   );
 }
@@ -36,15 +44,22 @@ export default function StatsLive({ initial }: { initial: GateStats }) {
   }, []);
 
   return (
-    <div className="mt-4 grid grid-cols-2 gap-3">
-      <Card label="Girdi" value={stats.checkedIn} accent />
-      <Card label="Kalan" value={stats.remaining} />
-      <Card label="Ödenmiş bilet" value={stats.paidTickets} />
-      <Card label="Açık kapı pası" value={stats.outstandingDoorPasses} />
-      <div className="col-span-2">
-        <Card
+    <div className="mt-5 space-y-3">
+      <div className="rounded-md border border-sea/30 bg-sea/5 p-6">
+        <p className="text-xs uppercase tracking-[0.2em] text-sea">Girdi</p>
+        <p className="mt-1 font-display text-6xl font-semibold leading-none text-ink">
+          {stats.checkedIn}
+        </p>
+        <p className="mt-3 text-sm text-moss">
+          Kalan {stats.remaining} · {stats.paidTickets} ödenmiş bilet
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Tile label="Açık kapı pası" value={stats.outstandingDoorPasses} />
+        <Tile
           label="Kapıda tahsilat"
           value={`${stats.doorCollections.count} · ${stats.doorCollections.amount} TL`}
+          valueClassName="text-2xl"
         />
       </div>
     </div>

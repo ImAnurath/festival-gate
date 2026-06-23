@@ -61,7 +61,7 @@ export default async function MobileDoorPage({
             </div>
             <form action={markPaidAtDoorAction}>
               <input type="hidden" name="id" value={a.id} />
-              <button className="rounded-sm bg-sea px-4 py-2 text-sm font-medium text-cream">
+              <button className="min-h-[40px] rounded-sm bg-sea px-5 py-2 text-sm font-medium text-cream transition-opacity active:opacity-80">
                 Ödendi
               </button>
             </form>
@@ -88,7 +88,7 @@ export default async function MobileDoorPage({
                 </span>
                 <form action={undoDoorPaymentAction}>
                   <input type="hidden" name="id" value={a.id} />
-                  <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70">
+                  <button className="min-h-[40px] rounded-sm border border-ink/20 px-4 py-2 text-sm font-medium text-ink/70 transition-colors active:bg-ink/5">
                     Geri al
                   </button>
                 </form>
