@@ -25,8 +25,8 @@ export const SELLER = {
   /** Müşteri/destek e-postası */
   email: "danisir@gmail.com",
   /** Sitenin canlı adresi, e.g. "https://kindzifest.com" */
-  website: "https://festival-gate.vercel.app",
+  website: "https://denizinyeri.com",
 } as const;
 
 /** Shown as "Son güncelleme" on each legal page. Update when text changes. */
-export const LEGAL_UPDATED = "5 Haziran 2026";
+export const LEGAL_UPDATED = "24 Haziran 2026";
