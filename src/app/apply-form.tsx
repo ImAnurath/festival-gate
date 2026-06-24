@@ -37,7 +37,7 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
           id="phone"
           name="phone"
           type="tel"
-          placeholder="05XX XXX XX XX"
+          placeholder="05XXXXXXXXX"
           className="field"
         />
         <p className="mt-1.5 text-xs leading-relaxed text-moss/70">
