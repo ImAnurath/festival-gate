@@ -18,6 +18,9 @@ const schema = z.object({
   WHATSAPP_PROVIDER: z.enum(["console", "twilio", "meta"]).default("console"),
   APP_URL: z.url(),
   EVENT_END: z.iso.datetime({ message: "EVENT_END must be an ISO datetime, e.g. 2026-09-01T21:00:00Z" }),
+  HAVALE_IBAN: z.string().min(1),
+  HAVALE_ACCOUNT_NAME: z.string().min(1),
+  HAVALE_BANK_NAME: z.string().min(1),
 });
 
 export type Config = {
@@ -34,6 +37,9 @@ export type Config = {
   whatsappProvider: "console" | "twilio" | "meta";
   appUrl: string;
   eventEnd: Date;
+  havaleIban: string;
+  havaleAccountName: string;
+  havaleBankName: string;
 };
 
 // Resolve the public site URL. Prefer the explicit NEXT_PUBLIC_APP_URL, but fall
@@ -71,6 +77,9 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     whatsappProvider: p.WHATSAPP_PROVIDER,
     appUrl: p.APP_URL,
     eventEnd: new Date(p.EVENT_END),
+    havaleIban: p.HAVALE_IBAN,
+    havaleAccountName: p.HAVALE_ACCOUNT_NAME,
+    havaleBankName: p.HAVALE_BANK_NAME,
   };
 }
 

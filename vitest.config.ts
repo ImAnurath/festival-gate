@@ -57,6 +57,9 @@ export default defineConfig({
       WHATSAPP_PROVIDER: "console",
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       EVENT_END: "2026-09-01T21:00:00.000Z",
+      HAVALE_IBAN: "TR000000000000000000000000",
+      HAVALE_ACCOUNT_NAME: "Test Hesap Sahibi",
+      HAVALE_BANK_NAME: "Test Bankası",
     },
   },
 });

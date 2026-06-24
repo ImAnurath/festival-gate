@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generatePayToken, expiryFromNow, generateVerifyToken, generateTicketCode } from "./token";
+import { generatePayToken, expiryFromNow, generateVerifyToken, generateTicketCode, havaleReference } from "./token";
 
 describe("generatePayToken", () => {
   it("produces a long url-safe token", () => {
@@ -25,6 +25,20 @@ describe("generateVerifyToken", () => {
     expect(a).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(a.length).toBeGreaterThanOrEqual(20);
     expect(a).not.toBe(b);
+  });
+});
+
+describe("havaleReference", () => {
+  it("returns 6 uppercase alphanumeric chars (no base64url symbols)", () => {
+    expect(havaleReference("_NKM5Qabc123")).toBe("NKM5QA");
+    expect(havaleReference("ab-cd_efGHIJ")).toBe("ABCDEF");
+    expect(havaleReference("xy")).toBe("XY"); // short input: no padding, just what's there
+  });
+
+  it("is symbol-free for any generated pay token", () => {
+    for (let i = 0; i < 50; i++) {
+      expect(havaleReference(generatePayToken())).toMatch(/^[A-Z0-9]{6}$/);
+    }
   });
 });
 

@@ -105,6 +105,30 @@ export async function markPaidAtDoor(id: string, now: Date = new Date()) {
   });
 }
 
+// Confirm a manual Havale/EFT bank transfer for an APPROVED application. Unlike
+// markPaidByToken there is NO token-expiry gate: the organizer verifies the
+// transfer in their own bank and is the authority, possibly after the pay
+// link's TTL has lapsed. Marks PAID, stamps paymentRef "havale", and issues the
+// QR tickets in the same transaction. The guarded updateMany (status APPROVED,
+// paidAt null) makes a repeat confirm a no-op (throws) rather than a double issue.
+export async function markPaidByHavale(id: string, now: Date = new Date()) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    const amount = app.ticketQuantity * config.ticketPrice;
+    const result = await tx.application.updateMany({
+      where: { id, status: "APPROVED", paidAt: null },
+      data: { status: "PAID", paymentRef: "havale", amount, paidAt: now },
+    });
+    if (result.count === 0) throw new NotPayableError();
+    const updated = await tx.application.findUniqueOrThrow({ where: { id } });
+    await issueTickets(tx, updated);
+    return tx.application.findUniqueOrThrow({
+      where: { id },
+      include: { tickets: true },
+    });
+  });
+}
+
 // Revert a mistaken door mark back to APPROVED. Gated on the door-pos marker,
 // not ticket count: door-pass guests have tickets while unpaid, so ticket count
 // no longer distinguishes door from online. Online payments carry a different
@@ -119,6 +143,29 @@ export async function undoDoorPayment(id: string) {
       throw new NotPayableError();
     }
     // Reset any tickets checked in during the door collection back to VALID.
+    await tx.ticket.updateMany({
+      where: { applicationId: id, status: "USED" },
+      data: { status: "VALID", checkedInAt: null },
+    });
+    await tx.application.update({
+      where: { id },
+      data: { status: "APPROVED", paidAt: null, amount: null, paymentRef: null },
+    });
+    return tx.application.findUniqueOrThrow({ where: { id } });
+  });
+}
+
+// Revert a mistaken Havale confirmation back to APPROVED. Gated on the "havale"
+// marker so online (iyzico/stub) and door-pos payments stay untouched. Resets
+// any tickets checked in after confirmation to VALID and keeps the issued
+// tickets, so the booking returns to a has-pass-but-unpaid state (mirrors
+// undoDoorPayment).
+export async function undoHavalePayment(id: string) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    if (app.status !== "PAID" || app.paymentRef !== "havale") {
+      throw new NotPayableError();
+    }
     await tx.ticket.updateMany({
       where: { applicationId: id, status: "USED" },
       data: { status: "VALID", checkedInAt: null },
