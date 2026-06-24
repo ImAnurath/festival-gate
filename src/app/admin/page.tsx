@@ -2,7 +2,13 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { getSession } from "@/lib/session";
-import { approveAction, rejectAction, resendLinkAction } from "./actions";
+import {
+  approveAction,
+  rejectAction,
+  resendLinkAction,
+  confirmHavaleAction,
+  undoHavaleAction,
+} from "./actions";
 import CopyLink from "@/components/copy-link";
 import BrandLogo from "@/components/brand-logo";
 
@@ -171,6 +177,12 @@ export default async function AdminPage({
                           Yeniden gönder
                         </button>
                       </form>
+                      <form action={confirmHavaleAction}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <button className="rounded-sm bg-hazel px-3 py-1.5 text-xs font-medium text-cream transition-opacity hover:opacity-90">
+                          Havale&apos;yi onayla
+                        </button>
+                      </form>
                     </div>
                   )}
                   {a.status === "PAID" && a.ticketsAccessToken && (
@@ -179,6 +191,14 @@ export default async function AdminPage({
                         url={`${config.appUrl}/tickets/${a.ticketsAccessToken}`}
                         label="Bilet bağlantısını kopyala"
                       />
+                      {a.paymentRef === "havale" && (
+                        <form action={undoHavaleAction}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
+                            Havale&apos;yi geri al
+                          </button>
+                        </form>
+                      )}
                     </div>
                   )}
                 </td>
