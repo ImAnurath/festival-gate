@@ -69,7 +69,9 @@ export default async function HavalePage({
   }
 
   const amount = app.ticketQuantity * config.ticketPrice;
-  const reference = token.slice(0, 6).toUpperCase();
+  // Strip base64url's "-"/"_" so the reference is plain A-Z/0-9 (no symbols for
+  // the buyer to type into the transfer description).
+  const reference = token.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase();
 
   return (
     <Shell>
