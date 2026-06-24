@@ -1,27 +1,42 @@
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-// Load an optional, gitignored local env file so each developer can point the
-// DB-backed tests at their own Postgres (e.g. a non-default password) without
-// editing this committed config. Absent file is fine (tests then fall back to
-// the default URL below, or skip when no DB is reachable).
+// DB-backed tests run against a SEPARATE Postgres database so a test run never
+// wipes your local dev/hand-testing data. The test DB URL is derived from the
+// app's own .env DATABASE_URL by appending "_test" to the database name, so it
+// reuses your real host/user/password automatically — no extra env file to keep
+// in sync. Precedence: explicit DATABASE_URL_TEST > derived-from-.env > default.
 try {
-  process.loadEnvFile(".env.test.local");
+  process.loadEnvFile(".env");
 } catch {
-  // no local override file; use defaults
+  // no .env (e.g. CI sets env vars directly) — fall back to the default below
 }
 
-// DB-backed tests use Postgres. Override with DATABASE_URL_TEST if your local
-// Postgres differs; otherwise they skip gracefully when no DB is reachable.
-const TEST_DATABASE_URL =
-  process.env.DATABASE_URL_TEST ??
-  "postgresql://postgres:postgres@localhost:5432/festival_gate_test";
+function deriveTestDatabaseUrl(): string {
+  if (process.env.DATABASE_URL_TEST) return process.env.DATABASE_URL_TEST;
+  const base = process.env.DATABASE_URL;
+  if (base) {
+    try {
+      const url = new URL(base);
+      if (!url.pathname.endsWith("_test")) url.pathname += "_test";
+      return url.toString();
+    } catch {
+      // malformed DATABASE_URL — fall through to the localhost default
+    }
+  }
+  return "postgresql://postgres:postgres@localhost:5432/festival_gate_test";
+}
+
+const TEST_DATABASE_URL = deriveTestDatabaseUrl();
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
     environment: "node",
     globals: true,
+    // DB-backed tests do real Postgres work (ticket issuance, PDF/QR); the first
+    // one on a cold connection can exceed the 5s default. 15s absorbs that.
+    testTimeout: 15000,
     // DB-backed test files (applications.test.ts, tickets.test.ts) share one
     // Postgres database via resetDb(). Running files in parallel causes one
     // file's resetDb() to truncate rows the other file just inserted, producing
