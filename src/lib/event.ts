@@ -30,7 +30,7 @@ export const EVENT = {
   // Venue's own photos (from @denizinyeriduayeri). Replace or add by dropping
   // files into /public/venue and editing this list.
   gallery: [
-    { src: "/venue/karadeniz.jpg", alt: "Fatsa, Ordu: sisli Karadeniz manzarası" },
+    { src: "/venue/kindzi-fest-ezgi.jpg", alt: "KİNDZİ FEST afişi: Ezgi Hocaoğlu DJ performansı, 12 Temmuz" },
     { src: "/venue/kindzi-fest-program.jpg", alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu" },
     { src: "/venue/tesis-kus-bakisi.jpg", alt: "Deniz'in Yeri Dua Yeri'nin kuş bakışı görünümü" },
     { src: "/venue/bahce-manzara.jpg", alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi" },

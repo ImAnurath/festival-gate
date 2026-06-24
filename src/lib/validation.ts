@@ -47,7 +47,7 @@ export function buildApplicationSchema(maxTickets: number) {
         .number()
         .int("Çocuk sayısı bir tam sayı olmalı")
         .min(0, "Çocuk sayısı negatif olamaz")
-        .max(10, "En fazla 10 çocuk ekleyebilirsiniz")
+        .max(3, "En fazla 3 çocuk ekleyebilirsiniz")
         .default(0),
       website: z.string().max(0, "Bu alan boş olmalı").optional().default(""),
     })

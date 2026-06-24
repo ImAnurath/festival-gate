@@ -65,12 +65,12 @@ describe("application schema", () => {
     if (r.success) expect(r.data.childCount).toBe(0);
   });
   it("accepts a childCount within range", () => {
-    const r = schema.safeParse({ ...valid, childCount: 4 });
+    const r = schema.safeParse({ ...valid, childCount: 3 });
     expect(r.success).toBe(true);
-    if (r.success) expect(r.data.childCount).toBe(4);
+    if (r.success) expect(r.data.childCount).toBe(3);
   });
-  it("rejects a childCount above 10", () => {
-    expect(() => schema.parse({ ...valid, childCount: 11 })).toThrow();
+  it("rejects a childCount above 3", () => {
+    expect(() => schema.parse({ ...valid, childCount: 4 })).toThrow();
   });
   it("rejects a negative childCount", () => {
     expect(() => schema.parse({ ...valid, childCount: -1 })).toThrow();

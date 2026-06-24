@@ -47,7 +47,7 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
 
       <div>
         <label className={labelClass} htmlFor="socialTags">
-          Sosyal medya
+          Açık sosyal medya hesabı
         </label>
         <input
           id="socialTags"
@@ -56,6 +56,10 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
           required
           className="field"
         />
+        <p className="mt-1.5 text-xs leading-relaxed text-moss/70">
+          Başvurunuzu değerlendirebilmemiz için profilinizin herkese açık
+          (public) olması gerekir.
+        </p>
       </div>
 
       <div>
@@ -82,7 +86,7 @@ export default function ApplyForm({ maxTickets }: { maxTickets: number }) {
           12 yaş altı çocuk sayısı
         </label>
         <select id="childCount" name="childCount" defaultValue={0} className="field">
-          {Array.from({ length: 11 }, (_, i) => i).map((n) => (
+          {Array.from({ length: 4 }, (_, i) => i).map((n) => (
             <option key={n} value={n}>
               {n}
             </option>
