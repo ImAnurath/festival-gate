@@ -53,12 +53,16 @@ const nextConfig: NextConfig = {
     // source excludes the scan subtree from the global rule so each route matches
     // exactly one rule (no duplicate Permissions-Policy header).
     return [
+      // Both door scanners need the camera: the desktop page at /admin/scan and
+      // the mobile page at /admin/m/scan. Both render the same <Scanner />.
       { source: "/admin/scan/:path*", headers: headersWithCamera("(self)") },
+      { source: "/admin/m/scan/:path*", headers: headersWithCamera("(self)") },
       // The negative-lookahead below is a prefix match: any route whose path
-      // starts with "admin/scan" is excluded from this global rule. A future
-      // sibling such as /admin/scanner would also be excluded and would need
-      // its own rule with the correct camera policy if ever added.
-      { source: "/((?!admin/scan).*)", headers: headersWithCamera("()") },
+      // starts with "admin/scan" or "admin/m/scan" is excluded from this global
+      // rule so the camera-enabled rules above are the only ones that match.
+      // A future sibling such as /admin/scanner would also be excluded and would
+      // need its own rule with the correct camera policy if ever added.
+      { source: "/((?!admin/scan|admin/m/scan).*)", headers: headersWithCamera("()") },
     ];
   },
 };
