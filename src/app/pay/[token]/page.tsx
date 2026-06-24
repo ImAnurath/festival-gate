@@ -177,18 +177,17 @@ export default async function PayPage({
         Şimdi öde
       </a>
 
-      <form action={`/pay/${token}/door-pass`} method="post" className="mt-3">
-        <button
-          type="submit"
-          className="w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
-        >
-          Kapıda öde
-        </button>
-      </form>
+      <a
+        href={`/pay/${token}/havale`}
+        className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+      >
+        Havale / EFT ile öde
+      </a>
 
       <p className="mt-4 text-xs leading-relaxed text-moss/70">
-        &quot;Kapıda öde&quot; biletinizi karekodla hemen verir, ödemeyi girişte
-        alırız. &quot;Şimdi öde&quot; ile online ödeme güvenli sayfada tamamlanır.
+        &quot;Şimdi öde&quot; ile online ödeme güvenli sayfada tamamlanır.
+        &quot;Havale / EFT ile öde&quot; ile hesabımıza transfer yaparsınız;
+        ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir.
       </p>
 
       <p className="mt-3 text-xs leading-relaxed text-moss/70">
