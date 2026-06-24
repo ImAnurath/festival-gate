@@ -12,6 +12,8 @@ import {
   markPaidByToken,
   markPaidAtDoor,
   undoDoorPayment,
+  markPaidByHavale,
+  undoHavalePayment,
   collectAtDoorAndCheckIn,
   searchApprovedApplications,
   searchAttendeeApplications,
@@ -240,6 +242,76 @@ suite("door payments", () => {
     const t0 = await prisma.ticket.findUniqueOrThrow({ where: { id: tickets[0].id } });
     expect(t0.status).toBe("VALID"); // reset
     expect(t0.checkedInAt).toBeNull();
+  });
+});
+
+suite("havale payments", () => {
+  it("markPaidByHavale marks PAID, stamps havale ref, and issues tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const paid = await markPaidByHavale(approved.id);
+
+    expect(paid.status).toBe("PAID");
+    expect(paid.paymentRef).toBe("havale");
+    expect(paid.amount).toBe(input.ticketQuantity * config.ticketPrice);
+    expect(paid.paidAt).toBeInstanceOf(Date);
+    expect(paid.ticketsAccessToken).toBeTruthy();
+    expect(paid.tickets.length).toBe(2); // buyer + 1 guest
+  });
+
+  it("markPaidByHavale refuses a non-APPROVED application", async () => {
+    const a = await createApplication(input); // still PENDING
+    await expect(markPaidByHavale(a.id)).rejects.toThrow();
+  });
+
+  it("markPaidByHavale is idempotent-safe: a second confirm throws", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidByHavale(approved.id);
+    await expect(markPaidByHavale(approved.id)).rejects.toThrow();
+  });
+
+  it("markPaidByHavale succeeds even when the pay token has expired", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await prisma.application.update({
+      where: { id: approved.id },
+      data: { payTokenExpiresAt: new Date(Date.now() - 1000) },
+    });
+    const paid = await markPaidByHavale(approved.id);
+    expect(paid.status).toBe("PAID");
+  });
+
+  it("undoHavalePayment reverts a havale payment and resets USED tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const paid = await markPaidByHavale(approved.id);
+    // Simulate one ticket checked in at the gate after confirmation.
+    await prisma.ticket.update({
+      where: { id: paid.tickets[0].id },
+      data: { status: "USED", checkedInAt: new Date() },
+    });
+
+    const reverted = await undoHavalePayment(approved.id);
+    expect(reverted.status).toBe("APPROVED");
+    expect(reverted.paidAt).toBeNull();
+    expect(reverted.amount).toBeNull();
+    expect(reverted.paymentRef).toBeNull();
+
+    const t0 = await prisma.ticket.findUniqueOrThrow({ where: { id: paid.tickets[0].id } });
+    expect(t0.status).toBe("VALID");
+    expect(t0.checkedInAt).toBeNull();
+  });
+
+  it("undoHavalePayment refuses an online (iyzico/stub) payment", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidByToken(approved.payToken!, "stub_ref", 1000);
+    await expect(undoHavalePayment(approved.id)).rejects.toThrow();
+
+    const still = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+    expect(still.status).toBe("PAID");
+    expect(still.paymentRef).toBe("stub_ref");
   });
 });
 
