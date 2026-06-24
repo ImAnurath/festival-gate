@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { config } from "@/lib/config";
 import { assertPayable } from "@/lib/state-machine";
+import { havaleReference } from "@/lib/token";
 import BrandLogo from "@/components/brand-logo";
 import CopyLink from "@/components/copy-link";
 
@@ -69,9 +70,7 @@ export default async function HavalePage({
   }
 
   const amount = app.ticketQuantity * config.ticketPrice;
-  // Strip base64url's "-"/"_" so the reference is plain A-Z/0-9 (no symbols for
-  // the buyer to type into the transfer description).
-  const reference = token.replace(/[^a-zA-Z0-9]/g, "").slice(0, 6).toUpperCase();
+  const reference = havaleReference(token);
 
   return (
     <Shell>
