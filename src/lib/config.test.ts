@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadConfig } from "./config";
+import { loadConfig, config } from "./config";
 
 const base = {
   SESSION_PASSWORD: "x".repeat(32),
@@ -11,6 +11,9 @@ const base = {
   NOTIFIER: "console",
   NEXT_PUBLIC_APP_URL: "https://example.com",
   EVENT_END: "2026-09-01T21:00:00.000Z",
+  HAVALE_IBAN: "TR000000000000000000000000",
+  HAVALE_ACCOUNT_NAME: "Test Hesap Sahibi",
+  HAVALE_BANK_NAME: "Test Bankası",
 };
 
 describe("loadConfig EVENT_END", () => {
@@ -37,6 +40,9 @@ describe("loadConfig", () => {
     NOTIFIER: "console",
     NEXT_PUBLIC_APP_URL: "http://localhost:3000",
     EVENT_END: "2026-09-01T21:00:00.000Z",
+    HAVALE_IBAN: "TR000000000000000000000000",
+    HAVALE_ACCOUNT_NAME: "Test Hesap Sahibi",
+    HAVALE_BANK_NAME: "Test Bankası",
   };
 
   it("parses numeric and enum fields", () => {
@@ -62,5 +68,13 @@ describe("loadConfig", () => {
   it("rejects a missing SESSION_PASSWORD", () => {
     const { SESSION_PASSWORD: _omit, ...withoutPassword } = base;
     expect(() => loadConfig(withoutPassword)).toThrow();
+  });
+});
+
+describe("config havale fields", () => {
+  it("exposes the Havale bank-transfer details from env", () => {
+    expect(config.havaleIban).toBe("TR000000000000000000000000");
+    expect(config.havaleAccountName).toBe("Test Hesap Sahibi");
+    expect(config.havaleBankName).toBe("Test Bankası");
   });
 });
