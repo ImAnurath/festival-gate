@@ -12,6 +12,7 @@ import {
 import CopyLink from "@/components/copy-link";
 import BrandLogo from "@/components/brand-logo";
 import { havaleReference } from "@/lib/token";
+import type { Application } from "@prisma/client";
 
 const STATUSES = ["PENDING", "APPROVED", "PAID", "REJECTED"] as const;
 
@@ -28,6 +29,118 @@ const STATUS_CLASSES: Record<(typeof STATUSES)[number], string> = {
   PAID: "bg-hazel/10 text-hazel",
   REJECTED: "bg-ink/10 text-ink/60",
 };
+
+// Consistent button styling shared by the table and the cards: filled = primary
+// action for the row's state, outlined = secondary.
+const BTN_PRIMARY =
+  "rounded-sm px-3 py-1.5 text-xs font-medium text-cream transition-opacity hover:opacity-90";
+const BTN_SECONDARY =
+  "rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5";
+
+// Buyer + named guests as one display string, "-" when no guests. Shared by the
+// desktop table cell (truncated) and the mobile card (full).
+function formatGuests(a: Application): string {
+  const names = JSON.parse(a.guestNames) as string[];
+  const socials = JSON.parse(a.guestSocials) as string[];
+  if (names.length === 0) return "-";
+  return names.map((n, i) => (socials[i] ? `${n} (${socials[i]})` : n)).join(", ");
+}
+
+// True when this application offers any action, so the mobile card can skip the
+// divider for terminal states (e.g. REJECTED).
+function hasActions(a: Application): boolean {
+  return (
+    a.status === "PENDING" ||
+    (a.status === "APPROVED" && a.payToken != null) ||
+    (a.status === "PAID" && a.ticketsAccessToken != null)
+  );
+}
+
+// Status-appropriate action buttons, rendered identically for the desktop table
+// and the mobile cards so the two layouts can never drift. The wrapper layout is
+// the caller's concern (className): a right-aligned row in the table, a wrapping
+// row in the card.
+function ApplicationActions({ a, className }: { a: Application; className: string }) {
+  return (
+    <div className={className}>
+      {a.status === "PENDING" && (
+        <>
+          <form action={approveAction}>
+            <input type="hidden" name="id" value={a.id} />
+            <button className={`${BTN_PRIMARY} bg-sea`}>Onayla</button>
+          </form>
+          <form action={rejectAction}>
+            <input type="hidden" name="id" value={a.id} />
+            <button className={BTN_SECONDARY}>Reddet</button>
+          </form>
+        </>
+      )}
+      {a.status === "APPROVED" && a.payToken && (
+        <>
+          <CopyLink url={`${config.appUrl}/pay/${a.payToken}`} label="Kopyala" />
+          <form action={resendLinkAction}>
+            <input type="hidden" name="id" value={a.id} />
+            <button className={BTN_SECONDARY}>Yeniden gönder</button>
+          </form>
+          <form action={confirmHavaleAction}>
+            <input type="hidden" name="id" value={a.id} />
+            <button className={`${BTN_PRIMARY} bg-hazel`}>Havale&apos;yi onayla</button>
+          </form>
+        </>
+      )}
+      {a.status === "PAID" && a.ticketsAccessToken && (
+        <>
+          <CopyLink
+            url={`${config.appUrl}/tickets/${a.ticketsAccessToken}`}
+            label="Bilet bağlantısı"
+          />
+          {a.paymentRef === "havale" && (
+            <form action={undoHavaleAction}>
+              <input type="hidden" name="id" value={a.id} />
+              <button className={BTN_SECONDARY}>Havale&apos;yi geri al</button>
+            </form>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// Mobile (sub-md) presentation of one application: the table is hidden and these
+// cards take over, so a phone never needs to scroll the wide table sideways.
+function ApplicationCard({ a }: { a: Application }) {
+  const reference = a.payToken ? havaleReference(a.payToken) : null;
+  return (
+    <div className="rounded-sm border border-ink/10 bg-mist p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium text-ink">{a.name}</p>
+          <p className="mt-0.5 break-all text-sm text-moss">{a.email}</p>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[a.status]}`}
+        >
+          {STATUS_LABELS[a.status]}
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-moss">
+        Sosyal: {a.socialTags || "-"} &middot; Adet {a.ticketQuantity} &middot;
+        Misafir {formatGuests(a)} &middot; Çocuk {a.childCount}
+      </p>
+      {reference && (
+        <p className="mt-1.5 text-sm text-moss">
+          Referans: <span className="font-mono text-ink">{reference}</span>
+        </p>
+      )}
+      {hasActions(a) && (
+        <ApplicationActions
+          a={a}
+          className="mt-3 flex flex-wrap gap-2 border-t border-ink/10 pt-3"
+        />
+      )}
+    </div>
+  );
+}
 
 export default async function AdminPage({
   searchParams,
@@ -106,7 +219,7 @@ export default async function AdminPage({
         ))}
       </nav>
 
-      <div className="mt-8 overflow-x-auto rounded-sm border border-ink/10">
+      <div className="mt-8 hidden overflow-x-auto rounded-sm border border-ink/10 md:block">
         <table className="w-full text-sm">
           <thead className="bg-cream-deep text-left text-xs uppercase tracking-wider text-moss">
             <tr>
@@ -136,14 +249,9 @@ export default async function AdminPage({
                 <td className="px-4 py-3 text-moss">{a.socialTags}</td>
                 <td className="px-4 py-3 text-ink">{a.ticketQuantity}</td>
                 <td className="px-4 py-3 text-moss">
-                  {(() => {
-                    const names = JSON.parse(a.guestNames) as string[];
-                    const socials = JSON.parse(a.guestSocials) as string[];
-                    if (names.length === 0) return "-";
-                    return names
-                      .map((n, i) => (socials[i] ? `${n} (${socials[i]})` : n))
-                      .join(", ");
-                  })()}
+                  <span className="block max-w-[14rem] truncate" title={formatGuests(a)}>
+                    {formatGuests(a)}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-ink">{a.childCount}</td>
                 <td className="px-4 py-3">
@@ -157,60 +265,26 @@ export default async function AdminPage({
                   {a.payToken ? havaleReference(a.payToken) : "-"}
                 </td>
                 <td className="px-4 py-3">
-                  {a.status === "PENDING" && (
-                    <div className="flex gap-2">
-                      <form action={approveAction}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <button className="rounded-sm bg-sea px-3 py-1.5 text-xs font-medium text-cream transition-opacity hover:opacity-90">
-                          Onayla
-                        </button>
-                      </form>
-                      <form action={rejectAction}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
-                          Reddet
-                        </button>
-                      </form>
-                    </div>
-                  )}
-                  {a.status === "APPROVED" && a.payToken && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CopyLink url={`${config.appUrl}/pay/${a.payToken}`} />
-                      <form action={resendLinkAction}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
-                          Yeniden gönder
-                        </button>
-                      </form>
-                      <form action={confirmHavaleAction}>
-                        <input type="hidden" name="id" value={a.id} />
-                        <button className="rounded-sm bg-hazel px-3 py-1.5 text-xs font-medium text-cream transition-opacity hover:opacity-90">
-                          Havale&apos;yi onayla
-                        </button>
-                      </form>
-                    </div>
-                  )}
-                  {a.status === "PAID" && a.ticketsAccessToken && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <CopyLink
-                        url={`${config.appUrl}/tickets/${a.ticketsAccessToken}`}
-                        label="Bilet bağlantısını kopyala"
-                      />
-                      {a.paymentRef === "havale" && (
-                        <form action={undoHavaleAction}>
-                          <input type="hidden" name="id" value={a.id} />
-                          <button className="rounded-sm border border-ink/20 px-3 py-1.5 text-xs font-medium text-ink/70 transition-colors hover:bg-ink/5">
-                            Havale&apos;yi geri al
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  )}
+                  <ApplicationActions
+                    a={a}
+                    className="flex flex-wrap items-center justify-end gap-2"
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-8 space-y-3 md:hidden">
+        {apps.length === 0 && (
+          <p className="rounded-sm border border-ink/10 px-4 py-10 text-center text-moss">
+            Henüz başvuru yok.
+          </p>
+        )}
+        {apps.map((a) => (
+          <ApplicationCard key={a.id} a={a} />
+        ))}
       </div>
     </main>
   );
