@@ -98,13 +98,16 @@ export default async function PayPage({
   }
 
   const amount = app.ticketQuantity * config.ticketPrice;
-  const session = await getPaymentProvider().createCheckout({
-    applicationId: app.id,
-    amount,
-    email: app.email,
-    name: app.name,
-    payToken: token,
-  });
+  const onlinePay = config.onlinePaymentEnabled;
+  const session = onlinePay
+    ? await getPaymentProvider().createCheckout({
+        applicationId: app.id,
+        amount,
+        email: app.email,
+        name: app.name,
+        payToken: token,
+      })
+    : null;
 
   // status is APPROVED here (PAID handled above). A stamped ticketsAccessToken
   // means the guest already chose "Kapıda öde" and holds a QR pass.
@@ -139,16 +142,19 @@ export default async function PayPage({
           </a>
         )}
 
-        <a
-          href={session.url}
-          className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
-        >
-          Şimdi öde
-        </a>
+        {onlinePay && session && (
+          <a
+            href={session.url}
+            className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+          >
+            Şimdi öde
+          </a>
+        )}
 
         <p className="mt-4 text-xs leading-relaxed text-moss/70">
-          Dilerseniz girişten önce online ödeyebilirsiniz. Biletleriniz ayrıca
-          e-posta ile gönderildi.
+          {onlinePay
+            ? "Dilerseniz girişten önce online ödeyebilirsiniz. Biletleriniz ayrıca e-posta ile gönderildi."
+            : "Biletleriniz ayrıca e-posta ile gönderildi."}
         </p>
       </Shell>
     );
@@ -170,24 +176,30 @@ export default async function PayPage({
         </p>
       </div>
 
-      <a
-        href={session.url}
-        className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
-      >
-        Şimdi öde
-      </a>
+      {onlinePay && session && (
+        <a
+          href={session.url}
+          className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
+        >
+          Şimdi öde
+        </a>
+      )}
 
       <a
         href={`/pay/${token}/havale`}
-        className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+        className={
+          onlinePay
+            ? "mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+            : "mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
+        }
       >
         Havale / EFT ile öde
       </a>
 
       <p className="mt-4 text-xs leading-relaxed text-moss/70">
-        &quot;Şimdi öde&quot; ile online ödeme güvenli sayfada tamamlanır.
-        &quot;Havale / EFT ile öde&quot; ile hesabımıza transfer yaparsınız;
-        ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir.
+        {onlinePay
+          ? "“Şimdi öde” ile online ödeme güvenli sayfada tamamlanır. “Havale / EFT ile öde” ile hesabımıza transfer yaparsınız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."
+          : "“Havale / EFT ile öde” ile hesabımıza transfer yaparsınız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."}
       </p>
 
       <p className="mt-3 text-xs leading-relaxed text-moss/70">

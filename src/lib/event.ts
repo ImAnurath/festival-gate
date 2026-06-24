@@ -31,10 +31,10 @@ export const EVENT = {
   // files into /public/venue and editing this list.
   gallery: [
     { src: "/venue/karadeniz.jpg", alt: "Fatsa, Ordu: sisli Karadeniz manzarası" },
-    { src: "/venue/duayeri.jpg", alt: "Deniz'in Yeri'nde köy kahvaltısı sofrası" },
-    { src: "/venue/kahvalti-portre.jpg", alt: "Yeşil tepeler arasında Deniz'in Yeri Dua Yeri" },
-    { src: "/venue/gurcu-sofra.jpg", alt: "Gürcü kahvaltısı hazırlığı" },
-    { src: "/venue/aile-kahvalti.jpg", alt: "Deniz'in Yeri Dua Yeri'nde sofra" },
-    { src: "/venue/fatsa-doga.jpg", alt: "Doğal köy kahvaltısı" },
+    { src: "/venue/kindzi-fest-program.jpg", alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu" },
+    { src: "/venue/tesis-kus-bakisi.jpg", alt: "Deniz'in Yeri Dua Yeri'nin kuş bakışı görünümü" },
+    { src: "/venue/bahce-manzara.jpg", alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi" },
+    { src: "/venue/sisli-bahce.jpg", alt: "Bulutlu havada Deniz'in Yeri'nin yeşil bahçesi ve oturma alanı" },
+    { src: "/venue/ic-mekan.jpg", alt: "Deniz'in Yeri'nin şömineli, ahşap tavanlı iç mekânı" },
   ],
 } as const;

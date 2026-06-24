@@ -54,12 +54,6 @@ export default function SiteFooter() {
         >
           Ödeme adımını görüntüle
         </a>
-        <a
-          href="/admin"
-          className="mt-4 text-[0.7rem] uppercase tracking-[0.2em] text-moss/40 transition-colors hover:text-moss"
-        >
-          Yönetim
-        </a>
       </div>
     </footer>
   );
