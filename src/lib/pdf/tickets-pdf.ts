@@ -27,10 +27,10 @@ const PAID_PAGE_W = ART_W + PANEL_W; // ~840
 const PAID_PAGE_H = ART_H; // ~241
 const S = ART_W / ART_SRC_W; // source px -> pt
 
-// White "Bilet No:" blank, in source pixels (initial estimate; calibrate in Task 2).
-const BILETNO_X_PX = 540; // left edge of the writable area, right of the pink label
-const BILETNO_W_PX = 215; // writable width
-const BILETNO_CY_PX = 338; // vertical center of the blank
+// White "Bilet No:" blank, in source pixels (calibrated in Task 2).
+const BILETNO_X_PX = 527; // left edge of the writable area, right of the pink label
+const BILETNO_W_PX = 185; // writable width (blank ends ~x=712 in source px)
+const BILETNO_CY_PX = 332; // vertical center of the blank (pill spans y=320–343)
 
 const TICKET_BG = join(process.cwd(), "src", "lib", "pdf", "assets", "ticket-bg.jpg");
 
