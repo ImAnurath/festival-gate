@@ -89,7 +89,7 @@ export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
                 src={item.src}
                 alt={item.alt}
                 fill
-                sizes={wide ? "100vw" : "(max-width: 640px) 50vw, 50vw"}
+                sizes={wide ? "100vw" : "50vw"}
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority={idx === 0}
               />
