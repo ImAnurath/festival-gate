@@ -1,6 +1,6 @@
 import type { Ticket } from "@prisma/client";
 import { config } from "../config";
-import { renderTicketsPdf } from "../pdf/tickets-pdf";
+import { renderTicketsPdf, renderPaidTicketsPdf } from "../pdf/tickets-pdf";
 import { notify } from "./index";
 import { buildApprovalEmail, buildTicketsEmail, buildGatePassEmail } from "./types";
 import type { EmailMessage } from "./types";
@@ -52,6 +52,7 @@ async function deliverPass(
   app: DeliverableApp,
   tickets: Ticket[],
   buildEmail: (p: { eventName: string; name: string; ticketsUrl: string }) => EmailMessage,
+  renderPdf: (a: Pick<DeliverableApp, "name">, t: Ticket[]) => Promise<Buffer>,
   context: string,
 ): Promise<void> {
   // Issuance always stamps ticketsAccessToken in the same transaction that issues
@@ -66,7 +67,7 @@ async function deliverPass(
 
   // Email (with PDF attachment). notify() is already best-effort internally.
   try {
-    const pdf = await renderTicketsPdf({ name: app.name }, tickets);
+    const pdf = await renderPdf({ name: app.name }, tickets);
     await notify(app.email, {
       ...buildEmail({ eventName: config.eventName, name: app.name, ticketsUrl }),
       attachments: [{ filename: "kindzi-fest-biletleri.pdf", content: pdf }],
@@ -89,13 +90,12 @@ async function deliverPass(
   }
 }
 
-// Deliver the paid tickets.
+// Deliver the paid tickets (new artwork ticket).
 export async function dispatchTickets(app: DeliverableApp, tickets: Ticket[]): Promise<void> {
-  return deliverPass(app, tickets, buildTicketsEmail, "tickets");
+  return deliverPass(app, tickets, buildTicketsEmail, renderPaidTicketsPdf, "tickets");
 }
 
-// Deliver an unpaid "pay at the gate" QR pass: same channels as dispatchTickets,
-// but the email copy tells the guest payment is due at the gate.
+// Deliver an unpaid "pay at the gate" QR pass (keeps the original ticket design).
 export async function dispatchGatePass(app: DeliverableApp, tickets: Ticket[]): Promise<void> {
-  return deliverPass(app, tickets, buildGatePassEmail, "gate pass");
+  return deliverPass(app, tickets, buildGatePassEmail, renderTicketsPdf, "gate pass");
 }
