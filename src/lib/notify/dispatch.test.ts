@@ -1,17 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { sendPayLink, sendTicketsLinkMock, notifyMock, renderMock } = vi.hoisted(() => ({
+const { sendPayLink, sendTicketsLinkMock, notifyMock, renderMock, renderPaidMock } = vi.hoisted(() => ({
   sendPayLink: vi.fn(),
   sendTicketsLinkMock: vi.fn(),
   notifyMock: vi.fn(),
   renderMock: vi.fn(),
+  renderPaidMock: vi.fn(),
 }));
 
 vi.mock("./whatsapp", () => ({
   getWhatsAppSender: () => ({ sendPayLink, sendTicketsLink: sendTicketsLinkMock }),
 }));
 vi.mock("./index", () => ({ notify: notifyMock }));
-vi.mock("../pdf/tickets-pdf", () => ({ renderTicketsPdf: renderMock }));
+vi.mock("../pdf/tickets-pdf", () => ({ renderTicketsPdf: renderMock, renderPaidTicketsPdf: renderPaidMock }));
 vi.mock("../config", () => ({ config: { eventName: "KİNDZİ FEST", appUrl: "https://x" } }));
 
 import { dispatchPayLink, dispatchTickets, dispatchGatePass } from "./dispatch";
@@ -23,6 +24,7 @@ beforeEach(() => {
   sendTicketsLinkMock.mockReset().mockResolvedValue(undefined);
   notifyMock.mockReset().mockResolvedValue(undefined);
   renderMock.mockReset().mockResolvedValue(Buffer.from("%PDF-fake"));
+  renderPaidMock.mockReset().mockResolvedValue(Buffer.from("%PDF-paid"));
 });
 
 describe("dispatchPayLink", () => {
@@ -70,7 +72,8 @@ const baseApp = {
 describe("dispatchTickets", () => {
   it("always emails with a PDF attachment and the retrieval link", async () => {
     await dispatchTickets({ ...baseApp }, tickets);
-    expect(renderMock).toHaveBeenCalledTimes(1);
+    expect(renderPaidMock).toHaveBeenCalledTimes(1);
+    expect(renderMock).not.toHaveBeenCalled();
     expect(notifyMock).toHaveBeenCalledTimes(1);
     const [to, msg] = notifyMock.mock.calls[0];
     expect(to).toBe("a@x.com");
@@ -124,6 +127,12 @@ describe("dispatchGatePass", () => {
     const [phone, vars] = sendTicketsLinkMock.mock.calls[0];
     expect(phone).toBe("+905551112233");
     expect(vars.ticketsUrl).toBe("https://x/tickets/tok-abc");
+  });
+
+  it("uses the OLD renderer (not the paid artwork renderer)", async () => {
+    await dispatchGatePass({ ...baseApp }, tickets);
+    expect(renderMock).toHaveBeenCalledTimes(1);
+    expect(renderPaidMock).not.toHaveBeenCalled();
   });
 
   it("skips delivery entirely when ticketsAccessToken is missing (no dead link)", async () => {

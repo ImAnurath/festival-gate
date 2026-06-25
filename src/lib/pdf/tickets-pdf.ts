@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { readFile } from "node:fs/promises";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import type { Application, Ticket } from "@prisma/client";
@@ -11,6 +12,27 @@ const PAGE_H = Math.round(85 * MM); // 241
 
 const STUB_W = 122;
 const PAD = 22;
+
+// ---- Paid ticket (artwork-based) geometry ----
+// Source artwork is 1099 x 390 px. We render it at ART_W points wide and put a
+// white QR/name panel to its right. Overlay positions are expressed in SOURCE
+// PIXELS (anchored to the 1099x390 art) and scaled by S, so they survive a
+// change to ART_W. The BILETNO_* values are calibrated in the plan's Task 2.
+const ART_SRC_W = 1099;
+const ART_SRC_H = 390;
+const ART_W = 680;
+const ART_H = Math.round((ART_W * ART_SRC_H) / ART_SRC_W); // ~241
+const PANEL_W = 160;
+const PAID_PAGE_W = ART_W + PANEL_W; // ~840
+const PAID_PAGE_H = ART_H; // ~241
+const S = ART_W / ART_SRC_W; // source px -> pt
+
+// White "Bilet No:" blank, in source pixels (calibrated in Task 2).
+const BILETNO_X_PX = 527; // left edge of the writable area, right of the pink label
+const BILETNO_W_PX = 185; // writable width (blank ends ~x=712 in source px)
+const BILETNO_CY_PX = 332; // vertical center of the blank (pill spans y=320–343)
+
+const TICKET_BG = join(process.cwd(), "src", "lib", "pdf", "assets", "ticket-bg.jpg");
 
 const C = {
   cream: "#f3eee2",
@@ -146,19 +168,75 @@ function drawTicketPage(doc: PDFKit.PDFDocument, ticket: Ticket, qrPng: Buffer):
   doc.restore();
 }
 
+function drawPaidTicketPage(
+  doc: PDFKit.PDFDocument,
+  ticket: Ticket,
+  qrPng: Buffer,
+  bg: Buffer,
+): void {
+  // 1. Delivered artwork, full-bleed on the left.
+  doc.image(bg, 0, 0, { width: ART_W, height: ART_H });
+
+  // 2. Unique ID stamped into the white "Bilet No:" blank.
+  const blankX = BILETNO_X_PX * S;
+  const blankW = BILETNO_W_PX * S;
+  const blankCY = BILETNO_CY_PX * S;
+  const idSize = fitFontSize(doc, "body-bold", ticket.code, blankW, 16, 8);
+  doc.font("body-bold").fontSize(idSize).fillColor(C.ink);
+  const idH = doc.heightOfString(ticket.code, { width: blankW, lineBreak: false });
+  doc.text(ticket.code, blankX, blankCY - idH / 2, {
+    width: blankW,
+    align: "center",
+    characterSpacing: 1,
+    lineBreak: false,
+  });
+
+  // 3. White QR/name panel on the right, with a perforation hint at its seam.
+  doc.save();
+  doc.rect(ART_W, 0, PANEL_W, PAID_PAGE_H).fill("#ffffff");
+  doc.lineWidth(1).strokeColor(C.divider).dash(4, { space: 3 });
+  doc.moveTo(ART_W, 10).lineTo(ART_W, PAID_PAGE_H - 10).stroke();
+  doc.undash();
+  doc.restore();
+
+  // QR centered near the top of the panel.
+  const qrSize = 120;
+  const qrX = ART_W + (PANEL_W - qrSize) / 2;
+  const qrY = 22;
+  doc.image(qrPng, qrX, qrY, { width: qrSize, height: qrSize });
+
+  // Name under the QR (auto-fit, wraps as a last resort). No role tag.
+  const nameX = ART_W + 12;
+  const nameW = PANEL_W - 24;
+  const nameY = qrY + qrSize + 12;
+  const nameSize = fitFontSize(doc, "body-bold", ticket.holderName, nameW, 16, 10);
+  doc
+    .font("body-bold")
+    .fontSize(nameSize)
+    .fillColor(C.ink)
+    .text(ticket.holderName, nameX, nameY, {
+      width: nameW,
+      align: "center",
+      height: PAID_PAGE_H - nameY - 10,
+    });
+}
+
 /**
- * Renders one boarding-pass PDF page per ticket and returns the PDF bytes.
+ * Shared PDFKit scaffolding: create the doc, register fonts, generate one QR per
+ * ticket, and draw one page per ticket with the supplied `draw` callback.
  * Pure: no DB, no network. Throws on an empty ticket list.
  */
-export async function renderTicketsPdf(
+async function renderPdf(
   application: Pick<Application, "name">,
   tickets: Ticket[],
+  pageSize: [number, number],
+  draw: (doc: PDFKit.PDFDocument, ticket: Ticket, qrPng: Buffer) => void,
 ): Promise<Buffer> {
   if (tickets.length === 0) {
     throw new Error("renderTicketsPdf requires at least one ticket");
   }
 
-  const doc = new PDFDocument({ size: [PAGE_W, PAGE_H], margin: 0 });
+  const doc = new PDFDocument({ size: pageSize, margin: 0 });
   doc.info.Title = `${config.eventName} biletleri — ${application.name}`;
   registerFonts(doc);
 
@@ -168,7 +246,6 @@ export async function renderTicketsPdf(
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
-  // QR generation is async; do it up front, then draw synchronously.
   const qrPngs = await Promise.all(
     tickets.map((t) =>
       QRCode.toBuffer(t.verifyToken, { errorCorrectionLevel: "M", margin: 0, width: 220 }),
@@ -176,10 +253,29 @@ export async function renderTicketsPdf(
   );
 
   tickets.forEach((ticket, i) => {
-    if (i > 0) doc.addPage({ size: [PAGE_W, PAGE_H], margin: 0 });
-    drawTicketPage(doc, ticket, qrPngs[i]);
+    if (i > 0) doc.addPage({ size: pageSize, margin: 0 });
+    draw(doc, ticket, qrPngs[i]);
   });
 
   doc.end();
   return done;
+}
+
+/** Old vector boarding pass. Used for the pay-at-the-gate path. */
+export async function renderTicketsPdf(
+  application: Pick<Application, "name">,
+  tickets: Ticket[],
+): Promise<Buffer> {
+  return renderPdf(application, tickets, [PAGE_W, PAGE_H], drawTicketPage);
+}
+
+/** Artwork-based ticket. Used for the paid path. */
+export async function renderPaidTicketsPdf(
+  application: Pick<Application, "name">,
+  tickets: Ticket[],
+): Promise<Buffer> {
+  const bg = await readFile(TICKET_BG);
+  return renderPdf(application, tickets, [PAID_PAGE_W, PAID_PAGE_H], (doc, ticket, qrPng) =>
+    drawPaidTicketPage(doc, ticket, qrPng, bg),
+  );
 }
