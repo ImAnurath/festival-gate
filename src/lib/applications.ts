@@ -86,6 +86,17 @@ export async function reissuePayLink(id: string) {
   return prisma.application.findUniqueOrThrow({ where: { id } });
 }
 
+// Record that an APPROVED guest asked to pay in person. Sets the flag only when
+// currently null (idempotent) and only while APPROVED — a request on an unknown,
+// expired, or non-APPROVED booking is a silent no-op so a stale pay tab can never
+// error. Touches no payment or ticket fields; the admin still issues the pass.
+export async function requestPayInPerson(payToken: string): Promise<void> {
+  await prisma.application.updateMany({
+    where: { payToken, status: "APPROVED", payInPersonRequestedAt: null },
+    data: { payInPersonRequestedAt: new Date() },
+  });
+}
+
 // Mark an APPROVED application paid at the gate (organizer's bank POS terminal).
 // Unlike markPaidByToken, this issues NO tickets and sends NO notifications: the
 // guest is physically at the door. The amount is derived server-side and the

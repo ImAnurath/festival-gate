@@ -19,6 +19,7 @@ import {
   searchAttendeeApplications,
   issueGatePass,
   revokeGatePass,
+  requestPayInPerson,
 } from "./applications";
 import { issueTickets } from "./tickets";
 
@@ -456,5 +457,35 @@ suite("gate pass (pay at the gate)", () => {
 
     const still = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
     expect(still.status).toBe("PAID");
+  });
+});
+
+suite("requestPayInPerson", () => {
+  it("stamps payInPersonRequestedAt on an APPROVED booking", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await requestPayInPerson(approved.payToken!);
+
+    const after = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+    expect(after.payInPersonRequestedAt).toBeInstanceOf(Date);
+    expect(after.status).toBe("APPROVED"); // unchanged
+  });
+
+  it("is idempotent: a second call keeps the first timestamp", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await requestPayInPerson(approved.payToken!);
+    const first = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+    await requestPayInPerson(approved.payToken!);
+    const second = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+
+    expect(second.payInPersonRequestedAt).toEqual(first.payInPersonRequestedAt);
+  });
+
+  it("is a silent no-op on a non-APPROVED booking", async () => {
+    const a = await createApplication(input); // still PENDING, but has no payToken
+    await expect(requestPayInPerson("nonexistent-token")).resolves.toBeUndefined();
+    const after = await prisma.application.findUniqueOrThrow({ where: { id: a.id } });
+    expect(after.payInPersonRequestedAt).toBeNull();
   });
 });
