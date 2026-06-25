@@ -30,11 +30,34 @@ export const EVENT = {
   // Venue's own photos (from @denizinyeriduayeri). Replace or add by dropping
   // files into /public/venue and editing this list.
   gallery: [
-    { src: "/venue/kindzi-fest-ezgi.jpg", alt: "KİNDZİ FEST afişi: Ezgi Hocaoğlu DJ performansı, 12 Temmuz" },
-    { src: "/venue/kindzi-fest-program.jpg", alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu" },
-    { src: "/venue/tesis-kus-bakisi.jpg", alt: "Deniz'in Yeri Dua Yeri'nin kuş bakışı görünümü" },
-    { src: "/venue/bahce-manzara.jpg", alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi" },
-    { src: "/venue/sisli-bahce.jpg", alt: "Bulutlu havada Deniz'in Yeri'nin yeşil bahçesi ve oturma alanı" },
-    { src: "/venue/ic-mekan.jpg", alt: "Deniz'in Yeri'nin şömineli, ahşap tavanlı iç mekânı" },
+    {
+      type: "image",
+      featured: true,
+      src: "/venue/kindzi-fest-program.jpg",
+      alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu",
+    },
+    {
+      type: "video",
+      src: "/venue/top-left.mp4",
+      poster: "/venue/top-left-poster.jpg",
+      alt: "Deniz'in Yeri Dua Yeri'nden görüntüler",
+    },
+    {
+      type: "video",
+      src: "/venue/top-middle.mp4",
+      poster: "/venue/top-middle-poster.jpg",
+      alt: "Deniz'in Yeri Dua Yeri'nin atmosferi",
+    },
+    {
+      type: "video",
+      src: "/venue/top-right.mp4",
+      poster: "/venue/top-right-poster.jpg",
+      alt: "Deniz'in Yeri Dua Yeri'nde bir an",
+    },
+    {
+      type: "image",
+      src: "/venue/bahce-manzara.jpg",
+      alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi",
+    },
   ],
 } as const;
