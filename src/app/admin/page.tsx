@@ -79,6 +79,11 @@ function ApplicationActions({ a, className }: { a: Application; className: strin
       )}
       {a.status === "APPROVED" && a.payToken && (
         <>
+          {a.payInPersonRequestedAt && a.ticketsAccessToken == null && (
+            <span className="rounded-full bg-moss/10 px-2.5 py-0.5 text-xs font-medium text-moss">
+              Şahsen ödeme istedi
+            </span>
+          )}
           <CopyLink url={`${config.appUrl}/pay/${a.payToken}`} label="Kopyala" />
           <form action={resendLinkAction}>
             <input type="hidden" name="id" value={a.id} />
