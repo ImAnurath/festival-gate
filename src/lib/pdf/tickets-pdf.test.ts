@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Ticket } from "@prisma/client";
-import { renderTicketsPdf } from "./tickets-pdf";
+import { renderTicketsPdf, renderPaidTicketsPdf } from "./tickets-pdf";
 
 // Plain fixture shaped like a Prisma Ticket (no DB involved).
 function ticket(overrides: Partial<Ticket> = {}): Ticket {
@@ -62,5 +62,43 @@ describe("renderTicketsPdf", () => {
     ]);
     const text = buf.toString("latin1");
     expect(text).toMatch(/\/Subtype\s*\/Image/);
+  });
+});
+
+describe("renderPaidTicketsPdf", () => {
+  it("throws when there are no tickets", async () => {
+    await expect(renderPaidTicketsPdf({ name: "Ali Veli" }, [])).rejects.toThrow(/at least one ticket/);
+  });
+
+  it("returns a non-empty PDF buffer", async () => {
+    const buf = await renderPaidTicketsPdf({ name: "Ali Veli" }, [
+      ticket({ isBuyer: true, holderName: "Ali Veli", code: "KF-7Q4X2" }),
+    ]);
+    expect(buf.length).toBeGreaterThan(0);
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
+  it("renders one page per ticket", async () => {
+    const tickets = [
+      ticket({ code: "KF-AAAAA", verifyToken: "tok-a" }),
+      ticket({ code: "KF-BBBBB", verifyToken: "tok-b" }),
+    ];
+    const buf = await renderPaidTicketsPdf({ name: "Ali Veli" }, tickets);
+    const pages = (buf.toString("latin1").match(/\/Type\s*\/Page\b/g) || []).length;
+    expect(pages).toBe(2);
+  });
+
+  it("embeds images (artwork + QR) on the page", async () => {
+    const buf = await renderPaidTicketsPdf({ name: "Ali Veli" }, [
+      ticket({ code: "KF-QR001", verifyToken: "tok-qr" }),
+    ]);
+    expect(buf.toString("latin1")).toMatch(/\/Subtype\s*\/Image/);
+  });
+
+  it("renders a very long Turkish holder name without throwing (auto-fit path)", async () => {
+    const buf = await renderPaidTicketsPdf({ name: "Ali Veli" }, [
+      ticket({ holderName: "Konstantin Büyükşehiroğlu Çağlayangil", code: "KF-LONGX", verifyToken: "tok-long" }),
+    ]);
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
   });
 });
