@@ -52,4 +52,6 @@ next-env.d.ts
 
 # visual-companion brainstorm artifacts
 /.superpowers
-.superpowers/
+
+# local dev utility, kept out of git
+scripts/reset-db.ts
