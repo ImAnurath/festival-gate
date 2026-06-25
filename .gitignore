@@ -53,9 +53,3 @@ next-env.d.ts
 # visual-companion brainstorm artifacts
 /.superpowers
 .superpowers/
-
-# Original uncompressed venue videos: kept locally, never deployed.
-# Use the compressed top-*.mp4 web versions instead.
-/public/venue/Top Left.mp4
-/public/venue/Top middle.mp4
-/public/venue/Top Right.mp4

@@ -6,11 +6,21 @@ describe("EVENT.gallery", () => {
     expect(EVENT.gallery).toHaveLength(5);
   });
 
-  it("has exactly one featured image", () => {
-    const featured = EVENT.gallery.filter(
-      (g) => g.type === "image" && "featured" in g && g.featured,
+  it("starts with the program image and ends with the wide banner", () => {
+    expect(EVENT.gallery[0]).toMatchObject({
+      type: "image",
+      src: "/venue/kindzi-fest-program.jpg",
+    });
+    const last = EVENT.gallery[EVENT.gallery.length - 1];
+    expect(last).toMatchObject({ type: "image", src: "/venue/bahce-manzara.jpg" });
+    expect((last as { wide?: boolean }).wide).toBe(true);
+  });
+
+  it("has exactly one wide image", () => {
+    const wide = EVENT.gallery.filter(
+      (g) => g.type === "image" && "wide" in g && g.wide,
     );
-    expect(featured).toHaveLength(1);
+    expect(wide).toHaveLength(1);
   });
 
   it("has 3 videos, each with a poster", () => {

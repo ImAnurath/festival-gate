@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-type GalleryImage = { type: "image"; src: string; alt: string; featured?: boolean };
+type GalleryImage = { type: "image"; src: string; alt: string; wide?: boolean };
 type GalleryVideo = { type: "video"; src: string; poster: string; alt: string };
 export type GalleryItem = GalleryImage | GalleryVideo;
 
@@ -11,10 +11,8 @@ const TILE =
   "group relative overflow-hidden rounded-sm border border-ink/10 bg-cream-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-hazel";
 
 export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
+  // Lightbox cycles through images only; videos are decorative autoplay loops.
   const images = items.filter((i): i is GalleryImage => i.type === "image");
-  const videos = items.filter((i): i is GalleryVideo => i.type === "video");
-  const featured = images.find((i) => i.featured) ?? images[0];
-  const others = images.filter((i) => i !== featured);
 
   const [open, setOpen] = useState<number | null>(null);
   const touchX = useRef<number | null>(null);
@@ -54,64 +52,50 @@ export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
 
   return (
     <>
-      <div className="space-y-3">
-        {/* hero image + stacked video column */}
-        <div className="grid gap-3 sm:grid-cols-[1.6fr_1fr]">
-          {featured && (
-            <button
-              type="button"
-              onClick={() => setOpen(images.indexOf(featured))}
-              aria-label={`${featured.alt} (büyüt)`}
-              className={`${TILE} aspect-[4/5]`}
-            >
-              <Image
-                src={featured.src}
-                alt={featured.alt}
-                fill
-                sizes="(max-width: 640px) 100vw, 50vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                priority
-              />
-            </button>
-          )}
+      {/* 2-column grid: portrait tiles (program + 3 clips), then a wide banner */}
+      <div className="grid grid-cols-2 gap-3">
+        {items.map((item) => {
+          const wide = item.type === "image" && item.wide;
+          const shape = wide ? "col-span-2 aspect-[16/7]" : "aspect-[4/5]";
 
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-1 sm:grid-rows-3">
-            {videos.map((v) => (
-              <div key={v.src} className={`${TILE} aspect-[4/5] sm:aspect-auto`}>
+          if (item.type === "video") {
+            return (
+              <div key={item.src} className={`${TILE} ${shape}`}>
                 <video
                   className="absolute inset-0 h-full w-full object-cover"
-                  src={v.src}
-                  poster={v.poster}
+                  src={item.src}
+                  poster={item.poster}
                   autoPlay
                   muted
                   loop
                   playsInline
                   preload="metadata"
-                  aria-label={v.alt}
+                  aria-label={item.alt}
                 />
               </div>
-            ))}
-          </div>
-        </div>
+            );
+          }
 
-        {/* wide banner image(s) below */}
-        {others.map((img) => (
-          <button
-            key={img.src}
-            type="button"
-            onClick={() => setOpen(images.indexOf(img))}
-            aria-label={`${img.alt} (büyüt)`}
-            className={`${TILE} aspect-[16/7] w-full`}
-          >
-            <Image
-              src={img.src}
-              alt={img.alt}
-              fill
-              sizes="100vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          </button>
-        ))}
+          const idx = images.indexOf(item);
+          return (
+            <button
+              key={item.src}
+              type="button"
+              onClick={() => setOpen(idx)}
+              aria-label={`${item.alt} (büyüt)`}
+              className={`${TILE} ${shape}`}
+            >
+              <Image
+                src={item.src}
+                alt={item.alt}
+                fill
+                sizes={wide ? "100vw" : "(max-width: 640px) 50vw, 50vw"}
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                priority={idx === 0}
+              />
+            </button>
+          );
+        })}
       </div>
 
       {open !== null && images[open] && (

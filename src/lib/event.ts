@@ -32,15 +32,8 @@ export const EVENT = {
   gallery: [
     {
       type: "image",
-      featured: true,
       src: "/venue/kindzi-fest-program.jpg",
       alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu",
-    },
-    {
-      type: "video",
-      src: "/venue/top-left.mp4",
-      poster: "/venue/top-left-poster.jpg",
-      alt: "Deniz'in Yeri Dua Yeri'nden görüntüler",
     },
     {
       type: "video",
@@ -50,12 +43,19 @@ export const EVENT = {
     },
     {
       type: "video",
+      src: "/venue/top-left.mp4",
+      poster: "/venue/top-left-poster.jpg",
+      alt: "Deniz'in Yeri Dua Yeri'nden görüntüler",
+    },
+    {
+      type: "video",
       src: "/venue/top-right.mp4",
       poster: "/venue/top-right-poster.jpg",
       alt: "Deniz'in Yeri Dua Yeri'nde bir an",
     },
     {
       type: "image",
+      wide: true,
       src: "/venue/bahce-manzara.jpg",
       alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi",
     },
