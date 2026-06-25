@@ -132,5 +132,6 @@ describe("dispatchGatePass", () => {
     ).resolves.toBeUndefined();
     expect(renderMock).not.toHaveBeenCalled();
     expect(notifyMock).not.toHaveBeenCalled();
+    expect(sendTicketsLinkMock).not.toHaveBeenCalled();
   });
 });

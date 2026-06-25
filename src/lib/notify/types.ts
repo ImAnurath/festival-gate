@@ -48,7 +48,7 @@ export function buildGatePassEmail(p: { eventName: string; name: string; tickets
     text:
       `Merhaba ${p.name},\n\n` +
       `${p.eventName} için QR biletiniz hazır ve bu e-postaya PDF olarak eklenmiştir.\n` +
-      `ÖNEMLİ: Bilet ücretini etkinlik girişte ödeyeceksiniz; ödemeniz henüz alınmadı.\n` +
+      `ÖNEMLİ: Bilet ücretini girişte ödeyeceksiniz; ödemeniz henüz alınmadı.\n` +
       `Biletinizi çevrimiçi görüntülemek için:\n${p.ticketsUrl}\n\n` +
       `Girişte bu biletteki karekodu okutup ödemenizi yapmanız yeterlidir. Etkinlikte görüşmek üzere!`,
   };
