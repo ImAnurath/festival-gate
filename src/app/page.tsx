@@ -109,7 +109,7 @@ export default async function Home({
             Büyütmek için bir fotoğrafa dokunun
           </p>
           <div className="mt-8">
-            <Gallery images={EVENT.gallery} />
+            <Gallery items={EVENT.gallery} />
           </div>
         </Reveal>
       </section>

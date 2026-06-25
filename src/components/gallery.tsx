@@ -3,9 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-type Photo = { src: string; alt: string };
+type GalleryImage = { type: "image"; src: string; alt: string; featured?: boolean };
+type GalleryVideo = { type: "video"; src: string; poster: string; alt: string };
+export type GalleryItem = GalleryImage | GalleryVideo;
 
-export default function Gallery({ images }: { images: readonly Photo[] }) {
+const TILE =
+  "group relative overflow-hidden rounded-sm border border-ink/10 bg-cream-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-hazel";
+
+export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
+  const images = items.filter((i): i is GalleryImage => i.type === "image");
+  const videos = items.filter((i): i is GalleryVideo => i.type === "video");
+  const featured = images.find((i) => i.featured) ?? images[0];
+  const others = images.filter((i) => i !== featured);
+
   const [open, setOpen] = useState<number | null>(null);
   const touchX = useRef<number | null>(null);
 
@@ -35,7 +45,6 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
       else if (e.key === "ArrowLeft") go(-1);
     };
     window.addEventListener("keydown", onKey);
-    // lock scroll while the lightbox is open
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", onKey);
@@ -45,27 +54,67 @@ export default function Gallery({ images }: { images: readonly Photo[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {images.map((g, i) => (
+      <div className="space-y-3">
+        {/* hero image + stacked video column */}
+        <div className="grid gap-3 sm:grid-cols-[1.6fr_1fr]">
+          {featured && (
+            <button
+              type="button"
+              onClick={() => setOpen(images.indexOf(featured))}
+              aria-label={`${featured.alt} (büyüt)`}
+              className={`${TILE} aspect-[4/5]`}
+            >
+              <Image
+                src={featured.src}
+                alt={featured.alt}
+                fill
+                sizes="(max-width: 640px) 100vw, 50vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                priority
+              />
+            </button>
+          )}
+
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-1 sm:grid-rows-3">
+            {videos.map((v) => (
+              <div key={v.src} className={`${TILE} aspect-[4/5] sm:aspect-auto`}>
+                <video
+                  className="absolute inset-0 h-full w-full object-cover"
+                  src={v.src}
+                  poster={v.poster}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  aria-label={v.alt}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* wide banner image(s) below */}
+        {others.map((img) => (
           <button
-            key={g.src}
+            key={img.src}
             type="button"
-            onClick={() => setOpen(i)}
-            aria-label={`${g.alt} (büyüt)`}
-            className="group relative aspect-[4/5] overflow-hidden rounded-sm border border-ink/10 bg-cream-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-hazel"
+            onClick={() => setOpen(images.indexOf(img))}
+            aria-label={`${img.alt} (büyüt)`}
+            className={`${TILE} aspect-[16/7] w-full`}
           >
             <Image
-              src={g.src}
-              alt={g.alt}
+              src={img.src}
+              alt={img.alt}
               fill
-              sizes="(max-width: 640px) 50vw, 33vw"
+              sizes="100vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
           </button>
         ))}
       </div>
 
-      {open !== null && (
+      {open !== null && images[open] && (
         <div
           role="dialog"
           aria-modal="true"
