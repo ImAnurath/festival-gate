@@ -8,6 +8,8 @@ import {
   resendLinkAction,
   confirmHavaleAction,
   undoHavaleAction,
+  giveGatePassAction,
+  revokeGatePassAction,
 } from "./actions";
 import CopyLink from "@/components/copy-link";
 import BrandLogo from "@/components/brand-logo";
@@ -77,6 +79,11 @@ function ApplicationActions({ a, className }: { a: Application; className: strin
       )}
       {a.status === "APPROVED" && a.payToken && (
         <>
+          {a.payInPersonRequestedAt && a.ticketsAccessToken == null && (
+            <span className="rounded-full bg-moss/10 px-2.5 py-0.5 text-xs font-medium text-moss">
+              Şahsen ödeme istedi
+            </span>
+          )}
           <CopyLink url={`${config.appUrl}/pay/${a.payToken}`} label="Kopyala" />
           <form action={resendLinkAction}>
             <input type="hidden" name="id" value={a.id} />
@@ -86,6 +93,23 @@ function ApplicationActions({ a, className }: { a: Application; className: strin
             <input type="hidden" name="id" value={a.id} />
             <button className={`${BTN_PRIMARY} bg-hazel`}>Havale&apos;yi onayla</button>
           </form>
+          {a.ticketsAccessToken == null ? (
+            <form action={giveGatePassAction}>
+              <input type="hidden" name="id" value={a.id} />
+              <button className={`${BTN_PRIMARY} bg-moss`}>Kapıda öde bileti ver</button>
+            </form>
+          ) : (
+            <>
+              <CopyLink
+                url={`${config.appUrl}/tickets/${a.ticketsAccessToken}`}
+                label="Bilet bağlantısı"
+              />
+              <form action={revokeGatePassAction}>
+                <input type="hidden" name="id" value={a.id} />
+                <button className={BTN_SECONDARY}>Bileti iptal et</button>
+              </form>
+            </>
+          )}
         </>
       )}
       {a.status === "PAID" && a.ticketsAccessToken && (

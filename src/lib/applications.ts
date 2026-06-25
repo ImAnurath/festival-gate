@@ -86,6 +86,17 @@ export async function reissuePayLink(id: string) {
   return prisma.application.findUniqueOrThrow({ where: { id } });
 }
 
+// Record that an APPROVED guest asked to pay in person. Sets the flag only when
+// currently null (idempotent) and only while APPROVED — a request on an unknown,
+// expired, or non-APPROVED booking is a silent no-op so a stale pay tab can never
+// error. Touches no payment or ticket fields; the admin still issues the pass.
+export async function requestPayInPerson(payToken: string): Promise<void> {
+  await prisma.application.updateMany({
+    where: { payToken, status: "APPROVED", payInPersonRequestedAt: null },
+    data: { payInPersonRequestedAt: new Date() },
+  });
+}
+
 // Mark an APPROVED application paid at the gate (organizer's bank POS terminal).
 // Unlike markPaidByToken, this issues NO tickets and sends NO notifications: the
 // guest is physically at the door. The amount is derived server-side and the
@@ -252,6 +263,49 @@ export async function stampTicketsDelivered(id: string) {
   await prisma.application.update({
     where: { id },
     data: { ticketsDeliveredAt: new Date() },
+  });
+}
+
+// Issue an unpaid "pay at the gate" QR pass for an APPROVED booking. Unlike
+// markPaidByHavale this records NO payment: it issues the QR tickets (via the
+// idempotent issueTickets) and leaves the application APPROVED / unpaid. The
+// gate collects payment on scan (collectAtDoorAndCheckIn). A repeat tap is a
+// no-op because issueTickets returns the existing tickets once ticketsAccessToken
+// is set.
+export async function issueGatePass(id: string) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    if (app.status !== "APPROVED") {
+      throw new TransitionError(
+        "Yalnızca onaylanmış başvurulara kapıda öde bileti verilebilir",
+      );
+    }
+    await issueTickets(tx, app);
+    return tx.application.findUniqueOrThrow({
+      where: { id },
+      include: { tickets: true },
+    });
+  });
+}
+
+// Revoke a mistakenly-issued gate pass: delete the QR tickets and clear the
+// access token, returning the booking to APPROVED / no-pass. Refuses once the
+// booking is paid, or once any ticket is USED (the guest has already checked in),
+// so it can never undo a payment or strand an attendee.
+export async function revokeGatePass(id: string) {
+  return prisma.$transaction(async (tx) => {
+    const app = await tx.application.findUniqueOrThrow({ where: { id } });
+    if (app.status !== "APPROVED" || app.paidAt) throw new NotPayableError();
+    const used = await tx.ticket.count({
+      where: { applicationId: id, status: "USED" },
+    });
+    if (used > 0) throw new NotPayableError();
+    await tx.ticket.deleteMany({ where: { applicationId: id } });
+    await tx.application.update({
+      where: { id },
+      data: { ticketsAccessToken: null, ticketsDeliveredAt: null },
+    });
+    return tx.application.findUniqueOrThrow({ where: { id } });
   });
 }
 

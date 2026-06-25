@@ -2,6 +2,7 @@ import { config } from "@/lib/config";
 import { loadTicketsByAccessToken } from "@/lib/tickets";
 import TicketList from "@/components/ticket-list";
 import BrandLogo from "@/components/brand-logo";
+import { MOTTO_PICKUP } from "@/lib/venue";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -51,6 +52,15 @@ export default async function TicketsPage({
       <p className="mt-3 leading-relaxed text-moss">
         Girişte her bilet için karekodu okutmanız yeterlidir.
       </p>
+
+      {view.application.paidAt == null && (
+        <div className="mt-4 rounded-sm border border-hazel/30 bg-mist p-4 text-left">
+          <p className="text-sm leading-relaxed text-moss">
+            Ödemeyi girişte yapacaksınız. Dilerseniz fiziksel biletinizi şu
+            adresten de alabilirsiniz: {MOTTO_PICKUP}
+          </p>
+        </div>
+      )}
 
       <TicketList tickets={view.tickets} />
 

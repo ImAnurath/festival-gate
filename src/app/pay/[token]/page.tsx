@@ -7,6 +7,8 @@ import Image from "next/image";
 import BrandLogo from "@/components/brand-logo";
 import TicketList from "@/components/ticket-list";
 import ShowcaseDemo from "@/components/showcase-demo";
+import { MOTTO_PICKUP } from "@/lib/venue";
+import { requestPayInPersonAction } from "./actions";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -128,6 +130,9 @@ export default async function PayPage({
             Girişte her bilet için karekodu okutun. Ödemeyi ({amount} TL) kapıda
             alacağız.
           </p>
+          <p className="mt-3 text-sm leading-relaxed text-moss/80">
+            Dilerseniz fiziksel biletinizi şu adresten de alabilirsiniz: {MOTTO_PICKUP}
+          </p>
         </div>
 
         {app.tickets.length > 0 && <TicketList tickets={app.tickets} />}
@@ -169,6 +174,18 @@ export default async function PayPage({
         Ödeme
       </h1>
 
+      {app.payInPersonRequestedAt && (
+        <div className="mt-6 rounded-sm border border-hazel/30 bg-mist p-5 text-left">
+          <p className="leading-relaxed text-moss">
+            Talebiniz alındı; organizatör biletinizi en kısa sürede gönderecek.
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-moss/80">
+            Ödemeyi girişte yapabilir ya da fiziksel biletinizi şu adresten
+            alabilirsiniz: {MOTTO_PICKUP}
+          </p>
+        </div>
+      )}
+
       <div className="mt-8 rounded-sm border border-ink/10 bg-mist p-6">
         <p className="text-moss">{app.ticketQuantity} bilet</p>
         <p className="mt-1 font-display text-5xl font-semibold text-hazel">
@@ -195,6 +212,15 @@ export default async function PayPage({
       >
         Havale / EFT ile öde
       </a>
+
+      <form action={requestPayInPersonAction}>
+        <input type="hidden" name="token" value={token} />
+        <button
+          className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
+        >
+          Şahsen ödemek istiyorum
+        </button>
+      </form>
 
       <p className="mt-4 text-xs leading-relaxed text-moss/70">
         {onlinePay

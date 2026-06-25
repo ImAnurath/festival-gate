@@ -32,8 +32,9 @@ model Application {
   paidAt            DateTime?
   reviewNote        String?
   ticketsAccessToken String?  @unique
-  ticketsDeliveredAt DateTime? // set once the post-payment email/WhatsApp went out; gates idempotent redelivery on a webhook retry
-  tickets           Ticket[]
+  ticketsDeliveredAt     DateTime? // set once the post-payment email/WhatsApp went out; gates idempotent redelivery on a webhook retry
+  payInPersonRequestedAt DateTime?
+  tickets                Ticket[]
 }
 
 model AdminUser {

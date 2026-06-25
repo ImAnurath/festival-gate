@@ -24,17 +24,42 @@ export const APPLY_RATE_LIMIT: RateLimitConfig = {
   windowMs: 60 * 60 * 1000,
 };
 
-// Resolve a stable rate-limit key from request headers. Behind Vercel the real
-// client IP is the first entry of x-forwarded-for; fall back to x-real-ip, then
-// a constant so a missing header buckets everyone together (fail closed) rather
-// than disabling the limit entirely. `prefix` namespaces independent budgets
-// (e.g. "login" vs "apply") so they don't share a counter.
+// Admin login, per-ACCOUNT dimension: 10 failed attempts per email per 15
+// minutes, on top of the per-IP LOGIN_RATE_LIMIT. The per-IP limit alone can't
+// stop a distributed (botnet) guessing run against one known admin address —
+// each source IP gets its own budget — so this caps total guesses per account
+// regardless of source. Deliberately more lenient than the per-IP limit (10 vs
+// 5): the per-IP gate is the first wall for a single attacker, while this one
+// only binds across many IPs, and a higher threshold keeps a fat-fingering
+// admin (or shared door-staff device) from locking the real account out. The
+// window is self-healing, so any lockout lifts in 15 minutes.
+export const LOGIN_EMAIL_RATE_LIMIT: RateLimitConfig = {
+  maxAttempts: 10,
+  windowMs: 15 * 60 * 1000,
+};
+
+// Resolve a stable rate-limit key from request headers. Prefer the headers Vercel
+// sets from the observed TCP peer (x-vercel-forwarded-for, then x-real-ip), which
+// a client cannot forge. x-forwarded-for is only a last-resort fallback (e.g.
+// local dev or a different host): a client can prepend its own entry, so trusting
+// its first element would let an attacker rotate the value to mint a fresh bucket
+// per request and walk straight past the limit. Falls back to a constant so a
+// missing header buckets everyone together (fail closed) rather than disabling the
+// limit. `prefix` namespaces independent budgets (e.g. "login" vs "apply").
 export function clientKey(headers: Headers, prefix: string): string {
   const ip =
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
     headers.get("x-real-ip")?.trim() ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "unknown";
   return `${prefix}:${ip}`;
+}
+
+// Rate-limit key for the per-account login budget. Normalizes the email (trim +
+// lowercase) so "Admin@x.com" and "admin@x.com " map to one bucket, and
+// namespaces it apart from the per-IP "login:" keys.
+export function emailKey(email: string): string {
+  return `login-email:${email.trim().toLowerCase()}`;
 }
 
 export type RateLimitResult =
