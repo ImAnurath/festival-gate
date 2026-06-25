@@ -2,7 +2,8 @@ import type { Ticket } from "@prisma/client";
 import { config } from "../config";
 import { renderTicketsPdf } from "../pdf/tickets-pdf";
 import { notify } from "./index";
-import { buildApprovalEmail, buildTicketsEmail } from "./types";
+import { buildApprovalEmail, buildTicketsEmail, buildGatePassEmail } from "./types";
+import type { EmailMessage } from "./types";
 import { getWhatsAppSender } from "./whatsapp";
 
 // Deliver the approval pay link on every channel the applicant gave us: email
@@ -36,18 +37,28 @@ export async function dispatchPayLink(
   }
 }
 
-// Deliver the paid tickets: ALWAYS email (the PDF is attached there), and
-// ADDITIONALLY WhatsApp a retrieval link when a phone is present. Every channel
-// is best-effort — a failure logs and never undoes the recorded payment.
-export async function dispatchTickets(
-  app: { name: string; email: string; phone: string | null; ticketsAccessToken: string | null },
-  tickets: Ticket[]
+type DeliverableApp = {
+  name: string;
+  email: string;
+  phone: string | null;
+  ticketsAccessToken: string | null;
+};
+
+// Shared delivery for any QR pass: ALWAYS email (PDF attached), and ADDITIONALLY
+// WhatsApp a retrieval link when a phone is present. Every channel is
+// best-effort — a failure logs and never undoes ticket issuance. `buildEmail`
+// selects the copy (paid tickets vs. pay-at-the-gate) and `context` labels logs.
+async function deliverPass(
+  app: DeliverableApp,
+  tickets: Ticket[],
+  buildEmail: (p: { eventName: string; name: string; ticketsUrl: string }) => EmailMessage,
+  context: string,
 ): Promise<void> {
-  // Issuance always stamps ticketsAccessToken in the same transaction that marks
-  // the application paid, so this should never be null on the real path. Guard
-  // anyway: without it we'd email a dead ".../tickets/null" link. Fail loudly.
+  // Issuance always stamps ticketsAccessToken in the same transaction that issues
+  // the tickets, so this should never be null on the real path. Guard anyway:
+  // without it we'd email a dead ".../tickets/null" link. Fail loudly.
   if (!app.ticketsAccessToken) {
-    console.error(`[dispatch] tickets delivery skipped: no ticketsAccessToken for ${app.email}`);
+    console.error(`[dispatch] ${context} delivery skipped: no ticketsAccessToken for ${app.email}`);
     return;
   }
 
@@ -57,11 +68,11 @@ export async function dispatchTickets(
   try {
     const pdf = await renderTicketsPdf({ name: app.name }, tickets);
     await notify(app.email, {
-      ...buildTicketsEmail({ eventName: config.eventName, name: app.name, ticketsUrl }),
+      ...buildEmail({ eventName: config.eventName, name: app.name, ticketsUrl }),
       attachments: [{ filename: "kindzi-fest-biletleri.pdf", content: pdf }],
     });
   } catch (err) {
-    console.error(`[dispatch] tickets email failed to=${app.email}`, err);
+    console.error(`[dispatch] ${context} email failed to=${app.email}`, err);
   }
 
   // WhatsApp link (only when a phone is present).
@@ -73,7 +84,18 @@ export async function dispatchTickets(
         eventName: config.eventName,
       });
     } catch (err) {
-      console.error(`[dispatch] tickets whatsapp send failed to=${app.phone}`, err);
+      console.error(`[dispatch] ${context} whatsapp send failed to=${app.phone}`, err);
     }
   }
+}
+
+// Deliver the paid tickets.
+export async function dispatchTickets(app: DeliverableApp, tickets: Ticket[]): Promise<void> {
+  return deliverPass(app, tickets, buildTicketsEmail, "tickets");
+}
+
+// Deliver an unpaid "pay at the gate" QR pass: same channels as dispatchTickets,
+// but the email copy tells the guest payment is due at the gate.
+export async function dispatchGatePass(app: DeliverableApp, tickets: Ticket[]): Promise<void> {
+  return deliverPass(app, tickets, buildGatePassEmail, "gate pass");
 }

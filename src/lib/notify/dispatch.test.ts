@@ -14,7 +14,7 @@ vi.mock("./index", () => ({ notify: notifyMock }));
 vi.mock("../pdf/tickets-pdf", () => ({ renderTicketsPdf: renderMock }));
 vi.mock("../config", () => ({ config: { eventName: "KİNDZİ FEST", appUrl: "https://x" } }));
 
-import { dispatchPayLink, dispatchTickets } from "./dispatch";
+import { dispatchPayLink, dispatchTickets, dispatchGatePass } from "./dispatch";
 
 const payUrl = "http://localhost:3000/pay/TOK";
 
@@ -102,5 +102,35 @@ describe("dispatchTickets", () => {
     expect(renderMock).not.toHaveBeenCalled();
     expect(notifyMock).not.toHaveBeenCalled();
     expect(sendTicketsLinkMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("dispatchGatePass", () => {
+  it("emails the gate-pass copy with a PDF attachment and the retrieval link", async () => {
+    await dispatchGatePass({ ...baseApp }, tickets);
+    expect(renderMock).toHaveBeenCalledTimes(1);
+    expect(notifyMock).toHaveBeenCalledTimes(1);
+    const [to, msg] = notifyMock.mock.calls[0];
+    expect(to).toBe("a@x.com");
+    expect(msg.attachments[0].content).toBeInstanceOf(Buffer);
+    expect(msg.subject).toContain("ödeme girişte");
+    expect(msg.text).toContain("https://x/tickets/tok-abc");
+    expect(sendTicketsLinkMock).not.toHaveBeenCalled();
+  });
+
+  it("also sends the WhatsApp retrieval link when a phone is present", async () => {
+    await dispatchGatePass({ ...baseApp, phone: "+905551112233" }, tickets);
+    expect(sendTicketsLinkMock).toHaveBeenCalledTimes(1);
+    const [phone, vars] = sendTicketsLinkMock.mock.calls[0];
+    expect(phone).toBe("+905551112233");
+    expect(vars.ticketsUrl).toBe("https://x/tickets/tok-abc");
+  });
+
+  it("skips delivery entirely when ticketsAccessToken is missing (no dead link)", async () => {
+    await expect(
+      dispatchGatePass({ ...baseApp, ticketsAccessToken: null }, tickets),
+    ).resolves.toBeUndefined();
+    expect(renderMock).not.toHaveBeenCalled();
+    expect(notifyMock).not.toHaveBeenCalled();
   });
 });
