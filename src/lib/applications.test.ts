@@ -17,6 +17,8 @@ import {
   collectAtDoorAndCheckIn,
   searchApprovedApplications,
   searchAttendeeApplications,
+  issueGatePass,
+  revokeGatePass,
 } from "./applications";
 import { issueTickets } from "./tickets";
 
@@ -386,5 +388,73 @@ suite("search helpers", () => {
     expect(res[0].tickets[0].verifyToken).toBeTruthy();
     expect(res[0].tickets[0].isBuyer).toBe(true);
     expect(res[0].tickets[0].holderName).toBe("Mert");
+  });
+});
+
+suite("gate pass (pay at the gate)", () => {
+  it("issueGatePass issues an unpaid QR and leaves the booking APPROVED", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const pass = await issueGatePass(approved.id);
+
+    expect(pass.status).toBe("APPROVED");
+    expect(pass.paidAt).toBeNull();
+    expect(pass.paymentRef).toBeNull();
+    expect(pass.ticketsAccessToken).toBeTruthy();
+    expect(pass.tickets.length).toBe(2); // buyer + 1 guest
+  });
+
+  it("issueGatePass is idempotent: a second call issues no extra tickets", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const first = await issueGatePass(approved.id);
+    const second = await issueGatePass(approved.id);
+
+    expect(second.tickets.length).toBe(first.tickets.length);
+    expect(second.ticketsAccessToken).toBe(first.ticketsAccessToken);
+    const count = await prisma.ticket.count({ where: { applicationId: approved.id } });
+    expect(count).toBe(2);
+  });
+
+  it("issueGatePass refuses a non-APPROVED application", async () => {
+    const a = await createApplication(input); // still PENDING
+    await expect(issueGatePass(a.id)).rejects.toThrow();
+  });
+
+  it("revokeGatePass deletes the tickets and clears the access token", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await issueGatePass(approved.id);
+
+    const reverted = await revokeGatePass(approved.id);
+    expect(reverted.status).toBe("APPROVED");
+    expect(reverted.ticketsAccessToken).toBeNull();
+
+    const count = await prisma.ticket.count({ where: { applicationId: approved.id } });
+    expect(count).toBe(0);
+  });
+
+  it("revokeGatePass refuses once a ticket has been USED", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    const pass = await issueGatePass(approved.id);
+    await prisma.ticket.update({
+      where: { id: pass.tickets[0].id },
+      data: { status: "USED", checkedInAt: new Date() },
+    });
+
+    await expect(revokeGatePass(approved.id)).rejects.toThrow();
+    const count = await prisma.ticket.count({ where: { applicationId: approved.id } });
+    expect(count).toBe(2); // nothing deleted
+  });
+
+  it("revokeGatePass refuses a PAID booking", async () => {
+    const a = await createApplication(input);
+    const approved = await approveApplication(a.id);
+    await markPaidByHavale(approved.id); // PAID + tickets issued
+    await expect(revokeGatePass(approved.id)).rejects.toThrow();
+
+    const still = await prisma.application.findUniqueOrThrow({ where: { id: approved.id } });
+    expect(still.status).toBe("PAID");
   });
 });
