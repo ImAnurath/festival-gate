@@ -41,6 +41,12 @@ describe("buildTicketsEmail", () => {
     expect(m.text).toContain("https://x/tickets/abc");
     expect(m.text).toContain("Ayşe");
   });
+
+  it("tells the buyer about the free drink and ızgara köfte", () => {
+    const m = buildTicketsEmail({ eventName: "KİNDZİ FEST", name: "Ayşe", ticketsUrl: "https://x/tickets/abc" });
+    expect(m.text).toContain("ızgara köfte");
+    expect(m.text).toContain("ücretsiz içecek");
+  });
 });
 
 describe("buildGatePassEmail", () => {
@@ -63,5 +69,10 @@ describe("buildGatePassEmail", () => {
       ticketsUrl: "https://x/tickets/tok-1",
     });
     expect(msg.text).toContain(MOTTO_PICKUP);
+  });
+
+  it("does NOT mention the free menu (unpaid buyers get no free menu)", () => {
+    const msg = buildGatePassEmail({ eventName: "KİNDZİ FEST", name: "Ali", ticketsUrl: "https://x/tickets/tok-1" });
+    expect(msg.text).not.toContain("ızgara köfte");
   });
 });

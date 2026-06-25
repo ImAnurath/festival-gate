@@ -39,6 +39,7 @@ export function buildTicketsEmail(p: { eventName: string; name: string; ticketsU
     text:
       `Merhaba ${p.name},\n\n` +
       `Ödemeniz alındı. ${p.eventName} biletleriniz bu e-postaya PDF olarak eklenmiştir.\n` +
+      `Biletiniz 1 ücretsiz içecek ve 1 ızgara köfte ikramı içerir.\n` +
       `Biletlerinizi çevrimiçi görüntülemek veya yeniden indirmek için:\n${p.ticketsUrl}\n\n` +
       `Girişte bu biletteki karekodu okutmanız yeterlidir. Etkinlikte görüşmek üzere!`,
   };
