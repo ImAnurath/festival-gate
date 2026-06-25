@@ -167,3 +167,114 @@ Unit tests mirroring the existing Havale tests:
   `node_modules/next/dist/docs/` before writing route/server-action code.
 - Create a dedicated branch for the work (current branch is
   `harden/login-ratelimit-trusted-ip`).
+
+---
+
+# Addendum (2026-06-25): guest "pay in person" request + Motto pickup address
+
+The base feature above is implemented and merged onto branch
+`feat/pay-at-gate-restore` (commits 07fba8e, e10ee31, 40865cc, 6a06b0b). This
+addendum adds two things on top, both approved:
+
+1. A guest-initiated "Şahsen ödemek istiyorum" (I want to pay in person) button
+   on the pay page that signals the admin, who then issues the gate pass with the
+   existing button.
+2. Tell guests they can buy a physical ticket at Motto, in addition to paying at
+   the gate.
+
+## Decisions (from brainstorming)
+
+- **Admin signal:** dashboard badge only — no admin email/notification plumbing.
+- **Other payment options after the request:** kept available (Havale/EFT, and
+  online when enabled) so the guest can still change their mind and pay now.
+- **Motto note placement:** gate-pass email + `/tickets/[token]` page + the
+  pay-in-person confirmation panel (and the pay page `hasDoorPass` branch, which
+  is the same gate-pass surface a guest sees).
+
+## Schema
+
+Add ONE nullable field to `Application`:
+
+```prisma
+payInPersonRequestedAt DateTime?
+```
+
+Requires a Prisma migration. Independent of `ticketsAccessToken` (the admin
+fulfilling the request by issuing the pass).
+
+## Motto pickup address (request 1)
+
+- Define the address ONCE as a shared constant so it is written in a single
+  place, e.g. in a small module `src/lib/venue.ts`:
+  `export const MOTTO_PICKUP = "Motto — Mustafakemalpaşa, Motto Sokak No:12, 52400 Fatsa/Ordu, Türkiye";`
+- **`buildGatePassEmail`** (`src/lib/notify/types.ts`): add a line offering the
+  Motto pickup in addition to paying at the gate. (Note: `types.ts` is a pure
+  module; import the constant from `venue.ts`, keep it free of server-only deps.)
+- **`/tickets/[token]` page** (`src/app/tickets/[token]/page.tsx`): the view
+  already carries `application`. When the booking is **unpaid** (gate pass —
+  `application.paidAt == null` / status not PAID), show a note: pay at the gate
+  or buy a physical ticket at Motto: `MOTTO_PICKUP`. When PAID, show nothing
+  extra.
+- **Pay page** (`src/app/pay/[token]/page.tsx`): the `hasDoorPass` branch and the
+  new pay-in-person confirmation panel both show the same Motto note.
+
+## "I want to pay in person" (request 2)
+
+- **Lib** (`src/lib/applications.ts`): `requestPayInPerson(payToken: string)` —
+  guarded `updateMany` on `status === "APPROVED"` stamping `payInPersonRequestedAt`
+  only when currently null. Idempotent; never touches payment/ticket fields. A
+  request on a non-APPROVED / unknown token is a silent no-op (returns without
+  throwing) so a stale tab can't error the page.
+- **Public server action** `requestPayInPersonAction(formData)` in
+  `src/app/pay/[token]/actions.ts` (NEW file, `"use server"`). NOT admin-gated:
+  it only sets a flag on a valid pay token, cannot issue tickets or record
+  payment. Reads `token` from the form, calls `requestPayInPerson`,
+  `revalidatePath` the pay page.
+- **Pay page normal view** (the bottom branch, no pass yet): add a
+  **"Şahsen ödemek istiyorum"** button (a `<form action={requestPayInPersonAction}>`
+  with the token in a hidden input) below the Havale/online buttons.
+- **After the request** (`payInPersonRequestedAt != null` and still no pass): the
+  same bottom view additionally renders a confirmation panel —
+  "Talebiniz alındı; organizatör biletinizi en kısa sürede gönderecek." + the
+  Motto note + a pay-at-gate note — WHILE keeping the Havale/online buttons.
+- **Admin dashboard** (`src/app/admin/page.tsx`): in the APPROVED branch, when
+  `a.payInPersonRequestedAt != null && a.ticketsAccessToken == null`, show a badge
+  **"Şahsen ödeme istedi"** next to the actions so the admin knows to issue the
+  pass. After issuance (`ticketsAccessToken != null`) the badge is gone and the
+  bilet-link/revoke pair shows (existing behavior). The admin list query already
+  selects the whole `Application`, so the new field is available with no query
+  change.
+
+## Flow
+
+Guest opens pay link → taps "Şahsen ödemek istiyorum" → confirmation + Motto/gate
+info (other options still available) → admin sees the "Şahsen ödeme istedi" badge
+in `/admin` → taps "Kapıda öde bileti ver" → guest receives the QR email (now with
+the Motto line) → pays at the gate or buys the physical ticket at Motto.
+
+## Error handling / safety
+
+- `requestPayInPerson` is a guarded, idempotent no-op when not APPROVED; the
+  public action cannot escalate (no ticket issuance, no payment, no PII exposure).
+- Setting the flag does not change `Status`; the booking stays APPROVED until the
+  admin issues the pass (existing `issueGatePass`).
+- The Motto note on the ticket page is gated on unpaid state so a PAID guest is
+  never told to "pay at the gate".
+
+## Testing (addendum)
+
+- `requestPayInPerson`: stamps `payInPersonRequestedAt` on an APPROVED booking;
+  idempotent (second call keeps the first timestamp); silent no-op on a
+  non-APPROVED / unknown token (no throw, no stamp). DB-backed, mirrors the
+  existing applications tests.
+- `buildGatePassEmail`: body contains the Motto address (extend the existing
+  Task 2 test).
+- Pages (pay / tickets / admin badge): no automated DOM tests (consistent with
+  the base feature); verify via `tsc` + `npm run build` + the manual checklist.
+
+## Out of scope (addendum)
+
+- No admin email/notification on a pay-in-person request (badge only).
+- No new `Status` value; `payInPersonRequestedAt` is a flag, not a state.
+- No auto-issue on request — the admin still issues the pass.
+- Motto address is a static constant, not env-configured (single event, public).
