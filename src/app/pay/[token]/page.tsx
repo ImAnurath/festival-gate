@@ -46,10 +46,10 @@ export default async function PayPage({
     return (
       <Shell>
         <h1 className="font-display text-3xl font-semibold text-ink">
-          {"Geçersiz bağlantı"}
+          Geçersiz bağlantı
         </h1>
         <p className="mt-4 leading-relaxed text-moss">
-          {"Bu ödeme bağlantısı geçerli değil. Lütfen bağlantıyı kontrol edin."}
+          Bu ödeme bağlantısı geçerli değil. Lütfen bağlantıyı kontrol edin.
         </p>
       </Shell>
     );
@@ -58,9 +58,10 @@ export default async function PayPage({
   if (app.status === "PAID") {
     return (
       <Shell>
-        <h1 className="font-display text-3xl font-semibold text-ink">{"Ödemeniz alındı"}</h1>
+        <h1 className="font-display text-3xl font-semibold text-ink">Ödemeniz alındı</h1>
         <p className="mt-4 leading-relaxed text-moss">
-          {config.eventName}{" biletleriniz hazır. Girişte her bilet için karekodu okutmanız yeterlidir. Etkinlikte görüşmek üzere!"}
+          {config.eventName} biletleriniz hazır. Girişte her bilet için karekodu
+          okutmanız yeterlidir. Etkinlikte görüşmek üzere!
         </p>
 
         {app.tickets.length > 0 && <TicketList tickets={app.tickets} />}
@@ -71,12 +72,12 @@ export default async function PayPage({
             download="kindzi-fest-biletleri.pdf"
             className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
           >
-            {"Biletleri İndir (PDF)"}
+            Biletleri İndir (PDF)
           </a>
         )}
 
         <p className="mt-4 text-xs leading-relaxed text-moss/70">
-          {"Biletleriniz ayrıca e-posta ile gönderildi."}
+          Biletleriniz ayrıca e-posta ile gönderildi.
         </p>
       </Shell>
     );
@@ -88,10 +89,11 @@ export default async function PayPage({
     return (
       <Shell>
         <h1 className="font-display text-3xl font-semibold text-ink">
-          {"Bağlantının süresi doldu"}
+          Bağlantının süresi doldu
         </h1>
         <p className="mt-4 leading-relaxed text-moss">
-          {"Bu ödeme bağlantısının süresi dolmuş. Lütfen organizatörle iletişime geçin."}
+          Bu ödeme bağlantısının süresi dolmuş. Lütfen organizatörle iletişime
+          geçin.
         </p>
       </Shell>
     );
@@ -110,7 +112,7 @@ export default async function PayPage({
     : null;
 
   // status is APPROVED here (PAID handled above). A stamped ticketsAccessToken
-  // means the guest already chose "Kapida ode" and holds a QR pass.
+  // means the guest already chose "Kapıda öde" and holds a QR pass.
   const hasDoorPass = app.ticketsAccessToken != null;
 
   if (hasDoorPass) {
@@ -120,15 +122,16 @@ export default async function PayPage({
           {config.eventName}
         </p>
         <h1 className="mt-4 font-display text-3xl font-semibold text-ink">
-          {"Biletleriniz hazır"}
+          Biletleriniz hazır
         </h1>
 
         <div className="mt-6 rounded-sm border border-hazel/30 bg-mist p-5">
           <p className="leading-relaxed text-moss">
-            {"Girişte her bilet için karekodu okutun. Ödemeyi ("}{amount}{" TL) kapıda alacağız."}
+            Girişte her bilet için karekodu okutun. Ödemeyi ({amount} TL) kapıda
+            alacağız.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-moss/80">
-            {"Dilerseniz fiziksel biletinizi şu adresten de alabilirsiniz: "}{MOTTO_PICKUP}
+            Dilerseniz fiziksel biletinizi şu adresten de alabilirsiniz: {MOTTO_PICKUP}
           </p>
         </div>
 
@@ -140,7 +143,7 @@ export default async function PayPage({
             download="kindzi-fest-biletleri.pdf"
             className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
           >
-            {"Biletleri İndir (PDF)"}
+            Biletleri İndir (PDF)
           </a>
         )}
 
@@ -149,7 +152,7 @@ export default async function PayPage({
             href={session.url}
             className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
           >
-            {"Şimdi öde"}
+            Şimdi öde
           </a>
         )}
 
@@ -168,24 +171,25 @@ export default async function PayPage({
         {config.eventName}
       </p>
       <h1 className="mt-4 font-display text-3xl font-semibold text-ink">
-        {"Ödeme"}
+        Ödeme
       </h1>
 
       {app.payInPersonRequestedAt && (
         <div className="mt-6 rounded-sm border border-hazel/30 bg-mist p-5 text-left">
           <p className="leading-relaxed text-moss">
-            {"Talebiniz alındı; organizatör biletinizi en kısa sürede gönderecek."}
+            Talebiniz alındı; organizatör biletinizi en kısa sürede gönderecek.
           </p>
           <p className="mt-2 text-sm leading-relaxed text-moss/80">
-            {"Ödemeyi girişte yapabilir ya da fiziksel biletinizi şu adresten alabilirsiniz: "}{MOTTO_PICKUP}
+            Ödemeyi girişte yapabilir ya da fiziksel biletinizi şu adresten
+            alabilirsiniz: {MOTTO_PICKUP}
           </p>
         </div>
       )}
 
       <div className="mt-8 rounded-sm border border-ink/10 bg-mist p-6">
-        <p className="text-moss">{app.ticketQuantity}{" bilet"}</p>
+        <p className="text-moss">{app.ticketQuantity} bilet</p>
         <p className="mt-1 font-display text-5xl font-semibold text-hazel">
-          {amount}{" TL"}
+          {amount} TL
         </p>
       </div>
 
@@ -194,7 +198,7 @@ export default async function PayPage({
           href={session.url}
           className="mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
         >
-          {"Şimdi öde"}
+          Şimdi öde
         </a>
       )}
 
@@ -206,7 +210,7 @@ export default async function PayPage({
             : "mt-8 inline-block w-full rounded-sm bg-ink px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-sea"
         }
       >
-        {"Havale / EFT ile öde"}
+        Havale / EFT ile öde
       </a>
 
       <form action={requestPayInPersonAction}>
@@ -214,37 +218,37 @@ export default async function PayPage({
         <button
           className="mt-3 inline-block w-full rounded-sm border border-ink/20 px-6 py-3.5 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-all duration-300 hover:bg-ink/5"
         >
-          {"Şahsen ödemek istiyorum"}
+          Şahsen ödemek istiyorum
         </button>
       </form>
 
       <p className="mt-4 text-xs leading-relaxed text-moss/70">
         {onlinePay
-          ? "“Şimdi öde” ile online ödeme güvenli sayfada tamamlanır. “Havale / EFT ile öde” ile hesabımıza transfer yaparsanız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."
-          : "“Havale / EFT ile öde” ile hesabımıza transfer yaparsanız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."}
+          ? "“Şimdi öde” ile online ödeme güvenli sayfada tamamlanır. “Havale / EFT ile öde” ile hesabımıza transfer yaparsınız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."
+          : "“Havale / EFT ile öde” ile hesabımıza transfer yaparsınız; ödemeniz onaylandıktan sonra biletleriniz e-posta ile gönderilir."}
       </p>
 
       <p className="mt-3 text-xs leading-relaxed text-moss/70">
-        {"Odeme yaparak"}{" "}
+        Ödeme yaparak{" "}
         <a
           href="/mesafeli-satis-sozlesmesi"
           className="text-hazel underline underline-offset-4 hover:text-ink"
         >
-          {"Mesafeli Satış Sözleşmesi"}
+          Mesafeli Satış Sözleşmesi
         </a>{" "}
-        {"ve"}{" "}
+        ve{" "}
         <a
           href="/teslimat-iade"
           className="text-hazel underline underline-offset-4 hover:text-ink"
         >
-          {"Teslimat ve İade Şartları"}
+          Teslimat ve İade Şartları
         </a>
-        &apos;{"nı kabul etmiş olursunuz. Biletler iade edilemez."}
+        &apos;nı kabul etmiş olursunuz. Biletler iade edilemez.
       </p>
 
       <Image
         src="/payment/iyzico-ile-ode.svg"
-        alt="iyzico ile ode"
+        alt="iyzico ile öde"
         width={210}
         height={31}
         className="mx-auto mt-6 h-auto w-[180px]"
