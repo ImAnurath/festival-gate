@@ -6,6 +6,7 @@ import {
   buildTicketsEmail,
   buildGatePassEmail,
 } from "./types";
+import { MOTTO_PICKUP } from "../venue";
 
 describe("email builders", () => {
   it("approval email contains the payment link", () => {
@@ -53,5 +54,14 @@ describe("buildGatePassEmail", () => {
     expect(msg.text).toContain("Ali");
     expect(msg.text).toContain("girişte"); // pay-at-the-gate wording
     expect(msg.text).toContain("https://x/tickets/tok-1");
+  });
+
+  it("offers the Motto pickup address in addition to paying at the gate", () => {
+    const msg = buildGatePassEmail({
+      eventName: "KİNDZİ FEST",
+      name: "Ali",
+      ticketsUrl: "https://x/tickets/tok-1",
+    });
+    expect(msg.text).toContain(MOTTO_PICKUP);
   });
 });

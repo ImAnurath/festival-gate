@@ -1,3 +1,5 @@
+import { MOTTO_PICKUP } from "../venue";
+
 export type EmailAttachment = { filename: string; content: Buffer };
 export type EmailMessage = {
   to?: string;
@@ -49,6 +51,7 @@ export function buildGatePassEmail(p: { eventName: string; name: string; tickets
       `Merhaba ${p.name},\n\n` +
       `${p.eventName} için QR biletiniz hazır ve bu e-postaya PDF olarak eklenmiştir.\n` +
       `ÖNEMLİ: Bilet ücretini girişte ödeyeceksiniz; ödemeniz henüz alınmadı.\n` +
+      `Dilerseniz fiziksel biletinizi şu adresten de alabilirsiniz: ${MOTTO_PICKUP}\n` +
       `Biletinizi çevrimiçi görüntülemek için:\n${p.ticketsUrl}\n\n` +
       `Girişte bu biletteki karekodu okutup ödemenizi yapmanız yeterlidir. Etkinlikte görüşmek üzere!`,
   };
