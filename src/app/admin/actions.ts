@@ -9,9 +9,11 @@ import {
   reissuePayLink,
   markPaidByHavale,
   undoHavalePayment,
+  issueGatePass,
+  revokeGatePass,
 } from "@/lib/applications";
 import { notify } from "@/lib/notify";
-import { dispatchPayLink, dispatchTickets } from "@/lib/notify/dispatch";
+import { dispatchPayLink, dispatchTickets, dispatchGatePass } from "@/lib/notify/dispatch";
 import { buildRejectionEmail } from "@/lib/notify/types";
 
 export async function approveAction(formData: FormData) {
@@ -56,5 +58,21 @@ export async function undoHavaleAction(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
   await undoHavalePayment(id);
+  revalidatePath("/admin");
+}
+
+export async function giveGatePassAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const app = await issueGatePass(id);
+  // Best-effort delivery: a send failure must never undo the issued pass.
+  await dispatchGatePass(app, app.tickets);
+  revalidatePath("/admin");
+}
+
+export async function revokeGatePassAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await revokeGatePass(id);
   revalidatePath("/admin");
 }
