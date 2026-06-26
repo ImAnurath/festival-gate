@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderEmail, escapeHtml, LOGO_CID } from "./email-layout";
+import { renderEmail, escapeHtml, LOGO_CID, loadLogoAttachment, attachInlineLogo } from "./email-layout";
 
 describe("escapeHtml", () => {
   it("escapes angle brackets and ampersands", () => {
@@ -47,5 +47,31 @@ describe("renderEmail", () => {
     expect(html).toContain("Onaylandı");
     expect(html).toContain("#16a34a");
     expect(html).toContain("by Deniz'in Yeri");
+  });
+});
+
+describe("loadLogoAttachment", () => {
+  it("reads the real PNG and tags it with the cid and content type", () => {
+    const att = loadLogoAttachment();
+    expect(att).not.toBeNull();
+    expect(att!.cid).toBe(LOGO_CID);
+    expect(att!.contentType).toBe("image/png");
+    expect(att!.filename).toBe("kindzi-fest-logo.png");
+    expect(att!.content.length).toBeGreaterThan(0);
+  });
+});
+
+describe("attachInlineLogo", () => {
+  it("prepends the logo for html messages, keeping existing attachments", () => {
+    const pdf = { filename: "tickets.pdf", content: Buffer.from("%PDF") };
+    const out = attachInlineLogo({ subject: "s", text: "t", html: "<b>hi</b>", attachments: [pdf] });
+    expect(out.attachments).toHaveLength(2);
+    expect(out.attachments![0].cid).toBe(LOGO_CID);
+    expect(out.attachments![1].filename).toBe("tickets.pdf");
+  });
+
+  it("leaves text-only messages untouched (no logo)", () => {
+    const out = attachInlineLogo({ subject: "s", text: "t" });
+    expect(out.attachments).toBeUndefined();
   });
 });

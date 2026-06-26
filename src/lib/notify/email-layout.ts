@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import type { EmailAttachment, EmailMessage } from "./types";
+
 export const LOGO_CID = "kindzi-fest-logo";
 
 export function escapeHtml(s: string): string {
@@ -62,4 +66,30 @@ export function renderEmail(p: RenderOpts): string {
     </table>
    </td></tr>
   </table></body></html>`;
+}
+
+const LOGO_PATH = join(process.cwd(), "public", "email", "kindzi-fest-logo.png");
+let cachedLogo: EmailAttachment | null = null;
+
+// Reads the inline logo once and caches it. On any read error logs and returns
+// null so the email still sends (the image is a courtesy, never a blocker).
+export function loadLogoAttachment(): EmailAttachment | null {
+  if (cachedLogo) return cachedLogo;
+  try {
+    const content = readFileSync(LOGO_PATH);
+    cachedLogo = { filename: "kindzi-fest-logo.png", content, cid: LOGO_CID, contentType: "image/png" };
+    return cachedLogo;
+  } catch (err) {
+    console.error(`[email-layout] could not read logo at ${LOGO_PATH}`, err);
+    return null;
+  }
+}
+
+// Prepends the inline logo to any message that has an html body. Text-only
+// messages and a missing logo file pass through unchanged.
+export function attachInlineLogo(message: EmailMessage): EmailMessage {
+  if (!message.html) return message;
+  const logo = loadLogoAttachment();
+  if (!logo) return message;
+  return { ...message, attachments: [logo, ...(message.attachments ?? [])] };
 }
