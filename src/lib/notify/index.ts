@@ -3,6 +3,7 @@ import type { Notifier, EmailMessage } from "./types";
 import { ResendNotifier, ConsoleNotifier } from "./resend";
 import { GmailNotifier } from "./gmail";
 import { FallbackNotifier } from "./fallback";
+import { attachInlineLogo } from "./email-layout";
 
 type BuildOpts = {
   notifier: "console" | "resend" | "gmail";
@@ -51,7 +52,7 @@ export function getNotifier(): Notifier {
 // state change that already happened. The admin copy-link button is the fallback.
 export async function notify(to: string, message: EmailMessage): Promise<void> {
   try {
-    await getNotifier().send(to, message);
+    await getNotifier().send(to, attachInlineLogo(message));
   } catch (err) {
     console.error(`[notify] send failed to=${to} subject="${message.subject}"`, err);
   }
