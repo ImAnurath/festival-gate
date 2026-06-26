@@ -59,4 +59,23 @@ describe("GmailNotifier", () => {
     const n = new GmailNotifier("me@gmail.com", "app-pass", "from@x.com");
     await expect(n.send("to@x.com", { subject: "s", text: "t" })).rejects.toThrow("EAUTH");
   });
+
+  it("forwards the html body when present", async () => {
+    const n = new GmailNotifier("me@gmail.com", "app-pass", "from@x.com");
+    await n.send("to@x.com", { subject: "s", text: "t", html: "<b>hi</b>" });
+    expect(sendMailMock.mock.calls[0][0].html).toBe("<b>hi</b>");
+  });
+
+  it("maps an inline attachment cid to nodemailer's cid and passes contentType", async () => {
+    const n = new GmailNotifier("me@gmail.com", "app-pass", "from@x.com");
+    await n.send("to@x.com", {
+      subject: "s",
+      text: "t",
+      html: "<img src='cid:logo'>",
+      attachments: [{ filename: "logo.png", content: Buffer.from("img"), cid: "logo", contentType: "image/png" }],
+    });
+    const att = sendMailMock.mock.calls[0][0].attachments[0];
+    expect(att.cid).toBe("logo");
+    expect(att.contentType).toBe("image/png");
+  });
 });

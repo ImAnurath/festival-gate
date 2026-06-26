@@ -35,4 +35,23 @@ describe("ResendNotifier", () => {
     const arg = sendMock.mock.calls[0][0];
     expect(arg.attachments).toBeUndefined();
   });
+
+  it("forwards the html body when present", async () => {
+    const n = new ResendNotifier("key", "from@x.com");
+    await n.send("to@x.com", { subject: "s", text: "t", html: "<b>hi</b>" });
+    expect(sendMock.mock.calls[0][0].html).toBe("<b>hi</b>");
+  });
+
+  it("maps an inline attachment cid to contentId and passes contentType", async () => {
+    const n = new ResendNotifier("key", "from@x.com");
+    await n.send("to@x.com", {
+      subject: "s",
+      text: "t",
+      html: "<img src='cid:logo'>",
+      attachments: [{ filename: "logo.png", content: Buffer.from("img"), cid: "logo", contentType: "image/png" }],
+    });
+    const att = sendMock.mock.calls[0][0].attachments[0];
+    expect(att.contentId).toBe("logo");
+    expect(att.contentType).toBe("image/png");
+  });
 });

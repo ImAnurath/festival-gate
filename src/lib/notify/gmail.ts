@@ -21,9 +21,18 @@ export class GmailNotifier implements Notifier {
       to,
       subject: message.subject,
       text: message.text,
-      // Nodemailer takes { filename, content: Buffer } directly. Only set the
-      // field when present so plain emails are unchanged.
-      ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+      ...(message.html ? { html: message.html } : {}),
+      // Nodemailer uses `cid` for inline images referenced as cid:... in html.
+      ...(message.attachments?.length
+        ? {
+            attachments: message.attachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              ...(a.cid ? { cid: a.cid } : {}),
+              ...(a.contentType ? { contentType: a.contentType } : {}),
+            })),
+          }
+        : {}),
     });
   }
 }
