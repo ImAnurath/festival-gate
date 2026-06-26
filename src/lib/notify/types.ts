@@ -1,10 +1,16 @@
 import { MOTTO_PICKUP } from "../venue";
 
-export type EmailAttachment = { filename: string; content: Buffer };
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer;
+  cid?: string; // inline image content-id (referenced as cid:... in html)
+  contentType?: string; // e.g. "image/png"
+};
 export type EmailMessage = {
   to?: string;
   subject: string;
-  text: string;
+  text: string; // plain-text fallback (multipart)
+  html?: string; // branded HTML body
   attachments?: EmailAttachment[];
 };
 
