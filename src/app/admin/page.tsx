@@ -186,7 +186,7 @@ export default async function AdminPage({
   });
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12 xl:max-w-7xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-center gap-3">
           <BrandLogo size={64} />
