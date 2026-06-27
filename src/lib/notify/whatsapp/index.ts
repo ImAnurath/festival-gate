@@ -17,7 +17,7 @@ export function getWhatsAppSender(): WhatsAppSender {
     }
     const ticketsTemplate = process.env.WHATSAPP_TICKETS_TEMPLATE ?? "";
     const ticketsLang = process.env.WHATSAPP_TICKETS_TEMPLATE_LANG ?? lang;
-    return new MetaWhatsAppSender(phoneNumberId, accessToken, template, lang, ticketsTemplate, ticketsLang);
+    return new MetaWhatsAppSender(phoneNumberId, accessToken, config.appUrl, template, lang, ticketsTemplate, ticketsLang);
   }
 
   if (config.whatsappProvider === "twilio") {
