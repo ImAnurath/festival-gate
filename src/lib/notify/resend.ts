@@ -15,9 +15,18 @@ export class ResendNotifier implements Notifier {
       to,
       subject: message.subject,
       text: message.text,
-      // Resend accepts { filename, content: Buffer }. Only set the field when
-      // present so non-attachment emails are unchanged.
-      ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+      ...(message.html ? { html: message.html } : {}),
+      // Resend's SDK takes camelCase contentId (→ content_id) and contentType.
+      ...(message.attachments?.length
+        ? {
+            attachments: message.attachments.map((a) => ({
+              filename: a.filename,
+              content: a.content,
+              ...(a.cid ? { contentId: a.cid } : {}),
+              ...(a.contentType ? { contentType: a.contentType } : {}),
+            })),
+          }
+        : {}),
     });
     if (error) throw new Error(`Resend send failed: ${error.name}: ${error.message}`);
   }
