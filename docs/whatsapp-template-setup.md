@@ -6,16 +6,20 @@ URL button). Editing an approved template **re-submits it for Meta review** —
 expect a short "Pending" period before it goes live. Sends during that window
 fail gracefully (the email and the admin copy-link button are the fallback).
 
-> ⚠️ **Critical:** the button's base URL must be `https://<your-domain>/{{1}}`
-> — with `{{1}}` as the **whole path**, NOT `https://<your-domain>/pay/{{1}}`.
+> ⚠️ **Critical:** the button's base URL must be `https://denizinyeri.com/{{1}}`
+> — with `{{1}}` as the **whole path**, NOT `https://denizinyeri.com/pay/{{1}}`.
 > The code sends the full path suffix (`pay/<token>`, `tickets/<token>`) as the
 > button variable. If you put `/pay/{{1}}` you'll get a doubled `/pay/pay/...`
 > and a broken link.
 
-Replace `<your-domain>` everywhere below with your production domain — the same
-host as `NEXT_PUBLIC_APP_URL` in Vercel (e.g. `https://kindzifest.com`). The
-domain in the template and the domain in `NEXT_PUBLIC_APP_URL` **must match**,
-or the reconstructed link will point at the wrong host.
+Production domain: **`https://denizinyeri.com`**. This is the host used below
+and it **must match** `NEXT_PUBLIC_APP_URL` in Vercel, or the reconstructed
+link and the logo image will point at the wrong host.
+
+> **Note on the button's URL sample:** the sample box wants the *full example
+> URL* (e.g. `https://denizinyeri.com/pay/abc123`), not just the suffix — it is
+> used only for Meta's review preview. At send time the code passes the suffix
+> (`pay/<token>`) as the `{{1}}` value, producing the real link.
 
 ---
 
@@ -25,7 +29,7 @@ For every send, `MetaWhatsAppSender` posts these three components:
 
 | Component | Content |
 |-----------|---------|
-| `header` (image) | `https://<your-domain>/email/kindzi-fest-logo.png` (the live logo) |
+| `header` (image) | `https://denizinyeri.com/email/kindzi-fest-logo.png` (the live logo) |
 | `body` | variable `{{1}}` = buyer's first name |
 | `button` (URL, index 0) | variable `{{1}}` = path suffix, e.g. `pay/abc123` or `tickets/abc123` |
 
@@ -37,7 +41,7 @@ variable, and one dynamic URL button. Keep the template **names** and
 
 ## Template 1 — `odeme_linki` (payment link)
 
-- **Category:** Utility
+- **Category:** Utility (Turkish UI: **Bilgilendirme → Varsayılan**)
 - **Language:** Turkish (`tr`)
 - **Header:** Media → **Image**. Upload `public/email/kindzi-fest-logo.png` as the
   sample (this is only for review; the code sends the live image each time).
@@ -56,8 +60,8 @@ variable, and one dynamic URL button. Keep the template **names** and
   ```
 - **Buttons:** Add one → **Visit website** → **Dynamic**.
   - Button text: `Ödemeyi Tamamla`
-  - URL: `https://<your-domain>/{{1}}`
-  - URL sample for `{{1}}`: `pay/abc123`
+  - URL: `https://denizinyeri.com/{{1}}`
+  - URL sample (full example URL): `https://denizinyeri.com/pay/abc123`
 
 ---
 
@@ -66,7 +70,7 @@ variable, and one dynamic URL button. Keep the template **names** and
 This one template is used for **both** paid tickets and pay-at-the-gate passes,
 so the copy deliberately does not claim "payment received."
 
-- **Category:** Utility
+- **Category:** Utility (Turkish UI: **Bilgilendirme → Varsayılan**)
 - **Language:** Turkish (`tr`)
 - **Header:** Media → **Image**. Upload `public/email/kindzi-fest-logo.png` as the sample.
 - **Body:**
@@ -84,8 +88,8 @@ so the copy deliberately does not claim "payment received."
   ```
 - **Buttons:** Add one → **Visit website** → **Dynamic**.
   - Button text: `Biletlerim`
-  - URL: `https://<your-domain>/{{1}}`
-  - URL sample for `{{1}}`: `tickets/abc123`
+  - URL: `https://denizinyeri.com/{{1}}`
+  - URL sample (full example URL): `https://denizinyeri.com/tickets/abc123`
 
 ---
 
@@ -95,8 +99,8 @@ so the copy deliberately does not claim "payment received."
 2. Vercel env vars match the template names/langs:
    - `WHATSAPP_PAYLINK_TEMPLATE=odeme_linki`, `WHATSAPP_PAYLINK_TEMPLATE_LANG=tr`
    - `WHATSAPP_TICKETS_TEMPLATE=bilet_linki`, `WHATSAPP_TICKETS_TEMPLATE_LANG=tr`
-3. `NEXT_PUBLIC_APP_URL` host == the `<your-domain>` you used in the button URLs.
-4. The logo is reachable publicly at `https://<your-domain>/email/kindzi-fest-logo.png`
+3. `NEXT_PUBLIC_APP_URL` host == the `denizinyeri.com` you used in the button URLs.
+4. The logo is reachable publicly at `https://denizinyeri.com/email/kindzi-fest-logo.png`
    (it ships in `public/email/`, already deployed).
 
 If a send fails (template pending/rejected, bad domain), it's logged and the
