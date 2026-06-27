@@ -114,4 +114,22 @@ describe("html bodies", () => {
     expect(m.html).toContain("by Deniz'in Yeri");
     expect(m.html).not.toContain("http");
   });
+
+  it("tickets html escapes the applicant name", () => {
+    const m = buildTicketsEmail({ eventName: "Test Fest", name: "A<b>", ticketsUrl: "https://x/tickets/abc" });
+    expect(m.html).toContain("A&lt;b&gt;");
+    expect(m.html).not.toContain("A<b>!");
+  });
+
+  it("gate-pass html escapes the applicant name", () => {
+    const m = buildGatePassEmail({ eventName: "Test Fest", name: "A<b>", ticketsUrl: "https://x/tickets/tok-1" });
+    expect(m.html).toContain("A&lt;b&gt;");
+    expect(m.html).not.toContain("A<b>!");
+  });
+
+  it("rejection html escapes the applicant name", () => {
+    const m = buildRejectionEmail({ eventName: "Test Fest", name: "A<b>" });
+    expect(m.html).toContain("A&lt;b&gt;");
+    expect(m.html).not.toContain("A<b>,");
+  });
 });
