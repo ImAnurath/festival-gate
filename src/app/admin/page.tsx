@@ -140,6 +140,7 @@ function ApplicationCard({ a }: { a: Application }) {
         <div className="min-w-0">
           <p className="font-medium text-ink">{a.name}</p>
           <p className="mt-0.5 break-all text-sm text-moss">{a.email}</p>
+          <p className="mt-0.5 text-sm text-moss">{a.phone || "-"}</p>
         </div>
         <span
           className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[a.status]}`}
@@ -249,6 +250,7 @@ export default async function AdminPage({
             <tr>
               <th className="px-4 py-3 font-medium">Ad</th>
               <th className="px-4 py-3 font-medium">E-posta</th>
+              <th className="px-4 py-3 font-medium">Telefon</th>
               <th className="px-4 py-3 font-medium">Sosyal</th>
               <th className="px-4 py-3 font-medium">Adet</th>
               <th className="px-4 py-3 font-medium">Misafirler</th>
@@ -261,7 +263,7 @@ export default async function AdminPage({
           <tbody>
             {apps.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-moss">
+                <td colSpan={10} className="px-4 py-10 text-center text-moss">
                   Henüz başvuru yok.
                 </td>
               </tr>
@@ -270,6 +272,7 @@ export default async function AdminPage({
               <tr key={a.id} className="border-t border-ink/10 align-top">
                 <td className="px-4 py-3 font-medium text-ink">{a.name}</td>
                 <td className="px-4 py-3 text-moss">{a.email}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-moss">{a.phone || "-"}</td>
                 <td className="px-4 py-3 text-moss">{a.socialTags}</td>
                 <td className="px-4 py-3 text-ink">{a.ticketQuantity}</td>
                 <td className="px-4 py-3 text-moss">
