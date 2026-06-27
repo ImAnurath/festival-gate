@@ -76,3 +76,42 @@ describe("buildGatePassEmail", () => {
     expect(msg.text).not.toContain("ızgara köfte");
   });
 });
+
+describe("html bodies", () => {
+  it("approval html has the pay link in both the button and the link box, plus the expiry note", () => {
+    const m = buildApprovalEmail({ eventName: "Test Fest", name: "Ali", payUrl: "https://x/pay/TOK" });
+    expect(m.html).toBeDefined();
+    expect(m.html).toContain('href="https://x/pay/TOK"'); // button
+    expect(m.html).toContain(">https://x/pay/TOK</a>"); // visible link box
+    expect(m.html).toContain("Kişisel ödeme bağlantınız");
+    expect(m.html).toContain("süresi yakında dolacaktır");
+  });
+
+  it("approval html escapes the applicant name", () => {
+    const m = buildApprovalEmail({ eventName: "Test Fest", name: "A<b>", payUrl: "https://x/pay/TOK" });
+    expect(m.html).toContain("A&lt;b&gt;");
+    expect(m.html).not.toContain("A<b>,");
+  });
+
+  it("tickets html shows the ticket link and the menu perk", () => {
+    const m = buildTicketsEmail({ eventName: "KİNDZİ FEST", name: "Ayşe", ticketsUrl: "https://x/tickets/abc" });
+    expect(m.html).toContain(">https://x/tickets/abc</a>");
+    expect(m.html).toContain("Bilet bağlantınız");
+    expect(m.html).toContain("ızgara köfte");
+  });
+
+  it("gate-pass html signals pay-at-the-gate, shows the ticket link, and omits the menu perk", () => {
+    const m = buildGatePassEmail({ eventName: "KİNDZİ FEST", name: "Ali", ticketsUrl: "https://x/tickets/tok-1" });
+    expect(m.html).toContain("girişte");
+    expect(m.html).toContain(">https://x/tickets/tok-1</a>");
+    expect(m.html).toContain(MOTTO_PICKUP);
+    expect(m.html).not.toContain("ızgara köfte");
+  });
+
+  it("rejection html is branded but carries no link or button", () => {
+    const m = buildRejectionEmail({ eventName: "Test Fest", name: "Ali" });
+    expect(m.html).toBeDefined();
+    expect(m.html).toContain("by Deniz'in Yeri");
+    expect(m.html).not.toContain("http");
+  });
+});
