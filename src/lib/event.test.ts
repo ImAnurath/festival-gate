@@ -6,13 +6,13 @@ describe("EVENT.gallery", () => {
     expect(EVENT.gallery).toHaveLength(5);
   });
 
-  it("starts with the program image and ends with the wide banner", () => {
+  it("starts with the promo video and ends with the wide banner", () => {
     expect(EVENT.gallery[0]).toMatchObject({
-      type: "image",
-      src: "/venue/kindzi-fest-program.jpg",
+      type: "video",
+      src: "/venue/fest-program.mp4",
     });
     const last = EVENT.gallery[EVENT.gallery.length - 1];
-    expect(last).toMatchObject({ type: "image", src: "/venue/bahce-manzara.jpg" });
+    expect(last).toMatchObject({ type: "image", src: "/venue/alan.jpeg" });
     expect((last as { wide?: boolean }).wide).toBe(true);
   });
 
@@ -23,9 +23,9 @@ describe("EVENT.gallery", () => {
     expect(wide).toHaveLength(1);
   });
 
-  it("has 3 videos, each with a poster", () => {
+  it("has 4 videos, each with a poster", () => {
     const videos = EVENT.gallery.filter((g) => g.type === "video");
-    expect(videos).toHaveLength(3);
+    expect(videos).toHaveLength(4);
     for (const v of videos) {
       expect((v as { poster?: string }).poster).toBeTruthy();
     }

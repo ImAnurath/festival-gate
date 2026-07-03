@@ -5,7 +5,7 @@
 export const EVENT = {
   name: "KİNDZİ FEST",
   presenter: "Deniz'in Yeri Dua Yeri",
-  dateLabel: "12 Temmuz 2026",
+  dateLabel: "26 Temmuz 2026",
   dayLabel: "Pazar",
   city: "Fatsa, Ordu",
   tagline:
@@ -31,9 +31,10 @@ export const EVENT = {
   // files into /public/venue and editing this list.
   gallery: [
     {
-      type: "image",
-      src: "/venue/kindzi-fest-program.jpg",
-      alt: "KİNDZİ FEST sahne programı: Umutcan Genç, Soner Arıca, Kafkas ekibi ve Ezgi Hocaoğlu",
+      type: "video",
+      src: "/venue/fest-program.mp4",
+      poster: "/venue/fest-program-poster.jpg",
+      alt: "KİNDZİ FEST program videosu: atölyeler, Umutcan Genç, Soner Arıca, Kafkas Ekibi ve Ezgi Hocaoğlu",
     },
     {
       type: "video",
@@ -43,20 +44,20 @@ export const EVENT = {
     },
     {
       type: "video",
-      src: "/venue/top-left.mp4",
-      poster: "/venue/top-left-poster.jpg",
-      alt: "Deniz'in Yeri Dua Yeri'nden görüntüler",
+      src: "/venue/ezgi-hocaoglu.mp4",
+      poster: "/venue/ezgi-hocaoglu-poster.jpg",
+      alt: "Ezgi Hocaoğlu DJ performans tanıtım videosu",
     },
     {
       type: "video",
-      src: "/venue/top-right.mp4",
-      poster: "/venue/top-right-poster.jpg",
-      alt: "Deniz'in Yeri Dua Yeri'nde bir an",
+      src: "/venue/umutcan-genc.mp4",
+      poster: "/venue/umutcan-genc-poster.jpg",
+      alt: "Umutcan Genç DJ performans tanıtım videosu",
     },
     {
       type: "image",
       wide: true,
-      src: "/venue/bahce-manzara.jpg",
+      src: "/venue/alan.jpeg",
       alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi",
     },
   ],

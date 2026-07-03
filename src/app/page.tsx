@@ -106,7 +106,7 @@ export default async function Home({
             Deniz&apos;in Yeri&apos;nden
           </p>
           <p className="mt-2 text-center text-sm text-moss/70">
-            Büyütmek için bir fotoğrafa dokunun
+            Büyütmek için bir fotoğrafa veya videoya dokunun
           </p>
           <div className="mt-8">
             <Gallery items={EVENT.gallery} />

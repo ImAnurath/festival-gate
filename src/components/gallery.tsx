@@ -11,17 +11,16 @@ const TILE =
   "group relative overflow-hidden rounded-sm border border-ink/10 bg-cream-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-hazel";
 
 export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
-  // Lightbox cycles through images only; videos are decorative autoplay loops.
-  const images = items.filter((i): i is GalleryImage => i.type === "image");
-
+  // Lightbox cycles through every item; videos play with controls and sound there,
+  // while the grid tiles stay muted autoplay loops.
   const [open, setOpen] = useState<number | null>(null);
   const touchX = useRef<number | null>(null);
 
   const close = useCallback(() => setOpen(null), []);
   const go = useCallback(
     (dir: number) =>
-      setOpen((i) => (i === null ? i : (i + dir + images.length) % images.length)),
-    [images.length]
+      setOpen((i) => (i === null ? i : (i + dir + items.length) % items.length)),
+    [items.length]
   );
 
   // swipe left/right to swap on touch devices
@@ -50,19 +49,27 @@ export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
     };
   }, [open, close, go]);
 
+  const current = open === null ? undefined : items[open];
+
   return (
     <>
       {/* 2-column grid: portrait tiles (program + 3 clips), then a wide banner */}
       <div className="grid grid-cols-2 gap-3">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const wide = item.type === "image" && item.wide;
           const shape = wide ? "col-span-2 aspect-[16/7]" : "aspect-[4/5]";
 
-          if (item.type === "video") {
-            return (
-              <div key={item.src} className={`${TILE} ${shape}`}>
+          return (
+            <button
+              key={item.src}
+              type="button"
+              onClick={() => setOpen(idx)}
+              aria-label={`${item.alt} (büyüt)`}
+              className={`${TILE} ${shape}`}
+            >
+              {item.type === "video" ? (
                 <video
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   src={item.src}
                   poster={item.poster}
                   autoPlay
@@ -72,37 +79,26 @@ export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
                   preload="metadata"
                   aria-label={item.alt}
                 />
-              </div>
-            );
-          }
-
-          const idx = images.indexOf(item);
-          return (
-            <button
-              key={item.src}
-              type="button"
-              onClick={() => setOpen(idx)}
-              aria-label={`${item.alt} (büyüt)`}
-              className={`${TILE} ${shape}`}
-            >
-              <Image
-                src={item.src}
-                alt={item.alt}
-                fill
-                sizes={wide ? "100vw" : "50vw"}
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                priority={idx === 0}
-              />
+              ) : (
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes={wide ? "(min-width: 1024px) 976px, 100vw" : "(min-width: 1024px) 482px, 50vw"}
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  priority={idx === 0}
+                />
+              )}
             </button>
           );
         })}
       </div>
 
-      {open !== null && images[open] && (
+      {open !== null && current && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Fotoğraf görüntüleyici"
+          aria-label="Galeri görüntüleyici"
           onClick={close}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
@@ -132,26 +128,39 @@ export default function Gallery({ items }: { items: readonly GalleryItem[] }) {
             </svg>
           </button>
 
-          {/* image */}
+          {/* current item */}
           <figure
             key={open}
             onClick={(e) => e.stopPropagation()}
             className="lb-figure flex max-h-[88vh] max-w-[92vw] flex-col items-center gap-3"
           >
             <div className="relative h-[78vh] w-[92vw] max-w-3xl">
-              <Image
-                src={images[open].src}
-                alt={images[open].alt}
-                fill
-                sizes="92vw"
-                className="object-contain"
-                priority
-              />
+              {current.type === "video" ? (
+                <video
+                  src={current.src}
+                  poster={current.poster}
+                  className="h-full w-full object-contain"
+                  controls
+                  autoPlay
+                  muted
+                  playsInline
+                  aria-label={current.alt}
+                />
+              ) : (
+                <Image
+                  src={current.src}
+                  alt={current.alt}
+                  fill
+                  sizes="92vw"
+                  className="object-contain"
+                  priority
+                />
+              )}
             </div>
             <figcaption className="text-center text-sm text-cream/70">
-              {images[open].alt}
+              {current.alt}
               <span className="ml-3 text-cream/40">
-                {open + 1} / {images.length}
+                {open + 1} / {items.length}
               </span>
             </figcaption>
           </figure>
