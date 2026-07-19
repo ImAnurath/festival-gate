@@ -54,11 +54,5 @@ export const EVENT = {
       poster: "/venue/umutcan-genc-poster.jpg",
       alt: "Umutcan Genç DJ performans tanıtım videosu",
     },
-    {
-      type: "image",
-      wide: true,
-      src: "/venue/alan.jpeg",
-      alt: "Deniz'in Yeri'nin deniz manzaralı bahçesi ve kameriyesi",
-    },
   ],
 } as const;
